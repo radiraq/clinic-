@@ -1,4 +1,4 @@
-const C = 'clinic-app-8ac44507';
+const C = 'clinic-app-b2f9a208';
 const FILES = ['./index.html', './doc.html', './app.css', './sec.webmanifest', './doc.webmanifest', './icon-sec-192.png', './icon-sec-512.png', './icon-doc-192.png', './icon-doc-512.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(C).then(c => c.addAll(FILES)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== C).map(k => caches.delete(k)))).then(() => self.clients.claim())); });

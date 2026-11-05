@@ -268,10 +268,11 @@ save(); $('c-cash').value = ''; $('c-note').value = '';
 toast(cash === exp ? 'تم الإغلاق ✓ الصندوق مطابق' : `تم الإغلاق — الفرق ${fmtK(cash - exp)} ألف`, cash !== exp);
 render(); sync();
 };
-let syncing = false, lastDir = 0;
+let syncing = false, again = false, lastDir = 0;
 function setNet(on) { $('net').textContent = on ? 'متصل' : 'بدون نت'; $('net').className = 'pill ' + (on ? 'on' : 'off'); }
 async function sync(force) {
-if (!S.cfg || syncing || !API.startsWith('https')) return;
+if (!S.cfg || !API.startsWith('https')) return;
+if (syncing) { again = true; return; }
 if (!navigator.onLine && !force) { setNet(false); return; }
 syncing = true;
 try {
@@ -293,7 +294,7 @@ save(); render();
 if (Date.now() - lastDir > 6 * 3600e3) { lastDir = Date.now(); loadDir(); }
 if (S.queue.length && done.size) setTimeout(() => sync(true), 500);
 } catch (e) { setNet(false); }
-finally { syncing = false; }
+finally { syncing = false; if (again) { again = false; setTimeout(() => sync(true), 300); } }
 }
 async function loadDir() {
 try {
