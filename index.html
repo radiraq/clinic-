@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1b3151">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="سكرتارية العيادة">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="./sec.webmanifest">
+<link rel="apple-touch-icon" href="./icon-sec-192.png">
+<link rel="icon" href="./icon-sec-192.png">
+<link rel="stylesheet" href="./app.css">
+<title>سكرتارية العيادة</title>
+</head>
+<body>
+<div class="top">
+<h1 id="hdr">سكرتارية العيادة<small id="sub"></small></h1>
+<span class="pill" id="net">…</span>
+<span class="pill" id="pend" role="button" title="رفع الآن">غير مرفوع: 0</span>
+</div>
+<div class="wrap">
+<div id="pinWarn" class="note bad hide">رمز السكرتيرة غير صحيح — افتحي «الإعدادات» وصححيه. المرضى محفوظين بالجهاز وما راح يضيعون.</div>
+<section id="v-setup" class="hide">
+<div class="card">
+<h2>إعداد الجهاز (مرة وحدة)</h2>
+<label>رمز السكرتيرة</label>
+<input id="s-pin" inputmode="numeric" autocomplete="off" placeholder="6 أرقام">
+<label>اسم السكرتيرة</label>
+<input id="s-name" placeholder="مثال: سارة">
+<label>العيادة</label>
+<div class="chips" id="s-clinic"></div>
+<div style="height:14px"></div>
+<button class="btn" id="s-save">حفظ</button>
+<p class="muted" id="s-msg"></p>
+</div>
+</section>
+<section id="v-new" class="hide">
+<div class="card">
+<label for="f-phone">رقم الهاتف</label>
+<input id="f-phone" inputmode="tel" placeholder="07XXXXXXXXX" autocomplete="off">
+<div id="f-found" class="found hide"></div>
+<label for="f-name">اسم المريض</label>
+<input id="f-name" placeholder="الاسم" autocomplete="off">
+<label>الفحص</label>
+<div class="chips" id="f-exams"></div>
+<input id="f-other" class="hide" placeholder="اكتب الفحص" style="margin-top:8px">
+<label>المبلغ (ألف دينار)</label>
+<div class="chips" id="f-prices"></div>
+<div class="row" style="margin-top:8px">
+<input id="f-custom" inputmode="decimal" placeholder="رقم آخر بالألف، مثال: 12.5">
+</div>
+<div id="f-reasonBox" class="hide">
+<label for="f-reason">سبب المجاني (إجباري)</label>
+<input id="f-reason" placeholder="مثال: مراجعة، حالة إنسانية، أمر الدكتور">
+</div>
+<div id="f-err" class="note bad hide"></div>
+<div style="height:12px"></div>
+<button class="btn gold" id="f-save">حفظ المريض</button>
+</div>
+</section>
+<section id="v-list" class="hide">
+<div class="stats">
+<div class="stat"><div class="k">مرضى اليوم</div><div class="big" id="l-count">0</div></div>
+<div class="stat"><div class="k">المجموع</div><div class="big" id="l-total">0</div><div class="unit">ألف دينار</div></div>
+</div>
+<div style="height:12px"></div>
+<div class="card list" id="l-items"></div>
+</section>
+<section id="v-old" class="hide">
+<div class="card">
+<h2>إضافة رقم مريض قديم (للمتابعة)</h2>
+<label for="o-name">اسم المريض</label>
+<input id="o-name" placeholder="الاسم">
+<label for="o-phone">رقم الهاتف</label>
+<input id="o-phone" inputmode="tel" placeholder="07XXXXXXXXX">
+<label for="o-note">ملاحظة (اختياري)</label>
+<input id="o-note" placeholder="مثال: متابعة غدة">
+<div id="o-err" class="note bad hide"></div>
+<div style="height:12px"></div>
+<button class="btn" id="o-save">حفظ</button>
+</div>
+</section>
+<section id="v-close" class="hide">
+<div class="card">
+<h2>إغلاق صندوق اليوم</h2>
+<div class="stats">
+<div class="stat"><div class="k">عدد المرضى</div><div class="big" id="c-count">0</div></div>
+<div class="stat"><div class="k">المسجّل</div><div class="big" id="c-exp">0</div><div class="unit">ألف دينار</div></div>
+</div>
+<div id="c-pendWarn" class="note warn hide">لازم ترفعين كل المرضى قبل الإغلاق. اضغطي «غير مرفوع» فوق، أو انتظري لما يرجع النت.</div>
+<label for="c-cash">الكاش الموجود بيدچ (ألف دينار)</label>
+<input id="c-cash" inputmode="decimal" placeholder="مثال: 375">
+<label for="c-note">ملاحظة (اختياري)</label>
+<input id="c-note" placeholder="">
+<div style="height:12px"></div>
+<button class="btn" id="c-save">إغلاق الصندوق</button>
+<p class="muted" id="c-done"></p>
+</div>
+<div class="card">
+<h2>الإعدادات</h2>
+<p class="muted" id="cfgInfo"></p>
+<button class="btn ghost" id="cfgEdit">تغيير السكرتيرة أو العيادة أو الرمز</button>
+</div>
+</section>
+</div>
+<nav class="tabs hide" id="tabs">
+<button data-v="new" class="act"><b>＋</b>مريض اليوم</button>
+<button data-v="list"><b>☰</b>قائمة اليوم</button>
+<button data-v="old"><b>☎</b>مريض قديم</button>
+<button data-v="close"><b>✓</b>الصندوق</button>
+</nav>
+<div id="modal" class="modal hide"><div class="card">
+<h2 id="m-title">إلغاء</h2>
+<p id="m-text" style="margin:0 0 8px"></p>
+<label for="m-reason">سبب الإلغاء (إجباري)</label>
+<input id="m-reason" placeholder="مثال: أُدخل بالغلط، المريض ما فحص">
+<div style="height:12px"></div>
+<div class="row"><button class="btn red" id="m-ok">إلغاء الإدخال</button><button class="btn ghost" id="m-no">رجوع</button></div>
+</div></div>
+<script>
+const API = 'https://script.google.com/macros/s/AKfycbxXLHujH3eyQWD6O4KDpxVItLiYMzk8nym6r_4_n19K8fPz079T28VJDJaNwhsKNwwa/exec';
+const CLINICS = ['الفلوجة', 'الكرمة'];
+const EXAMS = ['البطن', 'الحوض', 'الكلى والمثانة', 'البروستات', 'الحمل', 'الثدي', 'الغدة الدرقية', 'الخصية', 'الأنسجة الرخوة والكتل', 'دوبلر شرياني', 'دوبلر وريدي', 'دوبلر الحمل', 'دوبلر الخصية', 'سحب أو خزعة', 'تقرير مفراس/رنين/ماموغرام', 'أخرى'];
+const PRICES = [0, 10, 15, 20, 25, 30, 35, 40, 45, 50];
+const KEY = 'clinicSec.v1';
+let S = load();
+function load() { try { return Object.assign({ cfg: null, queue: [], visits: {}, srv: [], dir: {}, closes: {}, dev: '' }, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { return { cfg: null, queue: [], visits: {}, srv: [], dir: {}, closes: {}, dev: '' }; } }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { toast('⚠️ ذاكرة الجهاز ممتلئة', true); } }
+if (!S.dev) { S.dev = 'd' + Math.random().toString(36).slice(2, 8); save(); }
+try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch (e) { }
+const $ = id => document.getElementById(id);
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8) + S.dev;
+const bagDate = ts => new Date((ts || Date.now()) + 3 * 3600e3).toISOString().slice(0, 10);
+const bagTime = ts => new Date((ts || Date.now()) + 3 * 3600e3).toISOString().slice(11, 16);
+const fmtK = n => { n = Math.round(Number(n) * 100) / 100; return n.toLocaleString('en-US'); };
+const priceTxt = n => Number(n) ? fmtK(n) : 'مجاني';
+function digits(s) { return String(s || '').replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)); }
+function normPhone(v) {
+let s = digits(v).replace(/[^\d+]/g, '');
+if (s.startsWith('+964')) s = '0' + s.slice(4); else if (s.startsWith('00964')) s = '0' + s.slice(5); else if (s.startsWith('964')) s = '0' + s.slice(3); else if (s.startsWith('7') && s.length === 10) s = '0' + s;
+return s.replace(/\+/g, '');
+}
+function toast(t, bad) { const d = document.createElement('div'); d.className = 'toast'; if (bad) d.style.background = 'var(--bad)'; d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 2600); }
+let setupClinic = '';
+function showSetup() {
+$('s-pin').value = S.cfg ? S.cfg.pin : ''; $('s-name').value = S.cfg ? S.cfg.name : '';
+setupClinic = S.cfg ? S.cfg.clinic : CLINICS[0];
+$('s-clinic').innerHTML = CLINICS.map(c => `<span class="chip ${c === setupClinic ? 'sel' : ''}" data-c="${c}">${c}</span>`).join('');
+view('setup');
+}
+$('s-clinic').onclick = e => { const c = e.target.dataset.c; if (!c) return; setupClinic = c; [...$('s-clinic').children].forEach(x => x.classList.toggle('sel', x.dataset.c === c)); };
+$('s-save').onclick = () => {
+const pin = digits($('s-pin').value).replace(/\D/g, ''), name = $('s-name').value.trim();
+if (pin.length < 4 || !name) { $('s-msg').textContent = 'اكتبي الرمز والاسم.'; return; }
+S.cfg = { pin, name, clinic: setupClinic }; save(); $('pinWarn').classList.add('hide');
+render(); view('new'); sync(true);
+};
+$('cfgEdit').onclick = showSetup;
+function view(v) {
+['setup', 'new', 'list', 'old', 'close'].forEach(x => $('v-' + x).classList.toggle('hide', x !== v));
+$('tabs').classList.toggle('hide', v === 'setup');
+[...$('tabs').children].forEach(b => b.classList.toggle('act', b.dataset.v === v));
+if (v === 'list' || v === 'close') render();
+window.scrollTo(0, 0);
+}
+$('tabs').onclick = e => { const b = e.target.closest('button'); if (b) view(b.dataset.v); };
+let selExams = new Set(), selPrice = null;
+$('f-exams').innerHTML = EXAMS.map(x => `<span class="chip" data-x="${x}">${x}</span>`).join('');
+$('f-prices').innerHTML = PRICES.map(p => `<span class="chip price ${p ? '' : 'free'}" data-p="${p}">${p ? p : 'مجاني'}</span>`).join('');
+$('f-exams').onclick = e => { const x = e.target.dataset.x; if (!x) return; selExams.has(x) ? selExams.delete(x) : selExams.add(x); e.target.classList.toggle('sel'); $('f-other').classList.toggle('hide', !selExams.has('أخرى')); };
+$('f-prices').onclick = e => { const p = e.target.dataset.p; if (p == null) return; selPrice = Number(p); $('f-custom').value = ''; markPrice(); };
+$('f-custom').oninput = () => { const v = Number(digits($('f-custom').value).replace(/[^\d.]/g, '')); selPrice = $('f-custom').value.trim() === '' ? null : (isFinite(v) ? v : null); markPrice(true); };
+function markPrice(custom) {
+[...$('f-prices').children].forEach(c => c.classList.toggle('sel', !custom && Number(c.dataset.p) === selPrice));
+$('f-reasonBox').classList.toggle('hide', selPrice !== 0);
+}
+$('f-phone').oninput = () => {
+const p = normPhone($('f-phone').value), n = S.dir[p];
+if (/^07\d{9}$/.test(p) && n) { $('f-found').textContent = '✓ مريض سابق: ' + n; $('f-found').classList.remove('hide'); if (!$('f-name').value.trim()) $('f-name').value = n; }
+else $('f-found').classList.add('hide');
+};
+function err(id, t) { $(id).textContent = t; $(id).classList.toggle('hide', !t); }
+$('f-save').onclick = () => {
+const name = $('f-name').value.trim(), raw = $('f-phone').value.trim(), phone = raw ? normPhone(raw) : '';
+const exams = [...selExams].map(x => x === 'أخرى' ? ($('f-other').value.trim() || 'أخرى') : x);
+if (!name) return err('f-err', 'اكتبي اسم المريض.');
+if (phone && !/^07\d{9}$/.test(phone)) return err('f-err', 'رقم الهاتف لازم 11 رقم ويبدأ بـ 07 (أو اتركيه فارغ).');
+if (!exams.length) return err('f-err', 'اختاري نوع الفحص.');
+if (selPrice == null) return err('f-err', 'اختاري المبلغ.');
+if (selPrice > 1000) return err('f-err', 'المبلغ يُكتب بالألف: 15 يعني 15 ألف دينار.');
+const reason = $('f-reason').value.trim();
+if (selPrice === 0 && !reason) return err('f-err', 'اكتبي سبب المجاني.');
+err('f-err', '');
+const ts = Date.now();
+const v = { type: 'visit', id: uid(), ts, clinic: S.cfg.clinic, name, phone, exams, price: selPrice, reason: selPrice === 0 ? reason : '', secretary: S.cfg.name, device: S.dev };
+S.queue.push(v); S.visits[v.id] = Object.assign({}, v, { status: 'مدفوع', synced: false });
+if (phone) S.dir[phone] = name;
+save();
+const n = todayList().length;
+toast(`تم الحفظ ✓  رقم الدور ${n}`);
+$('f-name').value = ''; $('f-phone').value = ''; $('f-other').value = ''; $('f-custom').value = ''; $('f-reason').value = '';
+selExams.clear(); selPrice = null; [...$('f-exams').children].forEach(c => c.classList.remove('sel')); $('f-other').classList.add('hide'); markPrice(); $('f-found').classList.add('hide');
+render(); sync();
+$('f-phone').focus();
+};
+$('o-save').onclick = () => {
+const name = $('o-name').value.trim(), phone = normPhone($('o-phone').value);
+if (!name) return err('o-err', 'اكتبي الاسم.');
+if (!/^07\d{9}$/.test(phone)) return err('o-err', 'رقم الهاتف لازم 11 رقم ويبدأ بـ 07.');
+if (S.dir[phone]) return err('o-err', 'هذا الرقم مسجّل مسبقاً باسم: ' + S.dir[phone]);
+err('o-err', '');
+S.queue.push({ type: 'old', id: uid(), ts: Date.now(), name, phone, clinic: S.cfg.clinic, note: $('o-note').value.trim(), secretary: S.cfg.name, device: S.dev });
+S.dir[phone] = name; save();
+$('o-name').value = ''; $('o-phone').value = ''; $('o-note').value = '';
+toast('تم الحفظ ✓'); render(); sync();
+};
+function todayList() {
+const d = bagDate(), map = {};
+S.srv.forEach(r => { if (r.clinic === S.cfg.clinic) map[r.id] = Object.assign({ synced: true }, r); });
+Object.values(S.visits).forEach(v => {
+if (bagDate(v.ts) !== d || v.clinic !== S.cfg.clinic) return;
+map[v.id] = Object.assign({}, map[v.id] || {}, { id: v.id, time: bagTime(v.ts), name: v.name, phone: v.phone, exams: v.exams.join('، '), price: v.price, reason: v.reason, status: v.status, synced: v.synced, local: true });
+});
+return Object.values(map).sort((a, b) => a.time < b.time ? -1 : a.time > b.time ? 1 : 0);
+}
+function render() {
+if (!S.cfg) return;
+$('sub').textContent = `${S.cfg.clinic} · ${S.cfg.name} · ${bagDate()}`;
+const pend = S.queue.length;
+$('pend').textContent = 'غير مرفوع: ' + pend; $('pend').style.background = pend ? '#b3261e' : '';
+const L = todayList(), act = L.filter(x => x.status !== 'ملغي');
+const total = act.reduce((s, x) => s + (Number(x.price) || 0), 0);
+$('l-count').textContent = act.length; $('l-total').textContent = fmtK(total);
+$('c-count').textContent = act.length; $('c-exp').textContent = fmtK(total);
+$('c-pendWarn').classList.toggle('hide', !pend);
+const cd = S.closes[S.cfg.clinic + bagDate()];
+$('c-done').textContent = cd ? `آخر إغلاق اليوم: ${cd.time} — الكاش ${fmtK(cd.counted)} ألف` : '';
+$('cfgInfo').textContent = `السكرتيرة: ${S.cfg.name} · العيادة: ${S.cfg.clinic} · الجهاز: ${S.dev}`;
+$('l-items').innerHTML = L.length ? L.map((x, i) => `<div class="it ${x.status === 'ملغي' ? 'cx' : ''}">
+<div class="num">${i + 1}</div>
+<div class="main"><b>${esc(x.name)}${x.synced ? '' : '<span class="tag p">غير مرفوع</span>'}${x.status === 'ملغي' ? '<span class="tag c">ملغي</span>' : ''}</b>
+<span>${x.time} · ${esc(x.exams)}${x.reason ? ' · ' + esc(x.reason) : ''}</span></div>
+<div><div class="amt">${priceTxt(x.price)}</div>${x.status !== 'ملغي' ? `<button class="btn ghost" style="padding:4px 8px;font-size:12px;margin-top:4px" data-cx="${x.id}">إلغاء</button>` : ''}</div>
+</div>`).join('') : '<p class="muted">ماكو مرضى اليوم بعد.</p>';
+}
+function esc(s) { return String(s || '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+let cxId = null;
+$('l-items').onclick = e => { const id = e.target.dataset.cx; if (!id) return; const x = todayList().find(r => r.id === id); cxId = id; $('m-text').textContent = `${x.name} — ${priceTxt(x.price)}`; $('m-reason').value = ''; $('modal').classList.remove('hide'); };
+$('m-no').onclick = () => $('modal').classList.add('hide');
+$('m-ok').onclick = () => {
+const reason = $('m-reason').value.trim(); if (!reason) { $('m-reason').focus(); return; }
+if (S.visits[cxId]) S.visits[cxId].status = 'ملغي';
+const sv = S.srv.find(r => r.id === cxId); if (sv) sv.status = 'ملغي';
+S.queue.push({ type: 'cancel', id: uid(), ts: Date.now(), target: cxId, reason, secretary: S.cfg.name, device: S.dev });
+save(); $('modal').classList.add('hide'); render(); sync();
+};
+$('c-save').onclick = () => {
+if (S.queue.length) { toast('ارفعي المرضى أول', true); sync(true); return; }
+const raw = $('c-cash').value.trim(); const cash = Number(digits(raw).replace(/[^\d.]/g, ''));
+if (raw === '' || !isFinite(cash)) { $('c-cash').focus(); return; }
+const L = todayList().filter(x => x.status !== 'ملغي'), exp = L.reduce((s, x) => s + (Number(x.price) || 0), 0);
+const ts = Date.now();
+S.queue.push({ type: 'close', id: uid(), ts, clinic: S.cfg.clinic, date: bagDate(), count: L.length, expected: exp, counted: cash, note: $('c-note').value.trim(), secretary: S.cfg.name, device: S.dev });
+S.closes[S.cfg.clinic + bagDate()] = { time: bagTime(ts), counted: cash };
+save(); $('c-cash').value = ''; $('c-note').value = '';
+toast(cash === exp ? 'تم الإغلاق ✓ الصندوق مطابق' : `تم الإغلاق — الفرق ${fmtK(cash - exp)} ألف`, cash !== exp);
+render(); sync();
+};
+let syncing = false, lastDir = 0;
+function setNet(on) { $('net').textContent = on ? 'متصل' : 'بدون نت'; $('net').className = 'pill ' + (on ? 'on' : 'off'); }
+async function sync(force) {
+if (!S.cfg || syncing || !API.startsWith('https')) return;
+if (!navigator.onLine && !force) { setNet(false); return; }
+syncing = true;
+try {
+const batch = S.queue.slice(0, 200);
+const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), 30000);
+const r = await fetch(API, { method: 'POST', body: JSON.stringify({ pin: S.cfg.pin, clinic: S.cfg.clinic, ops: batch }), signal: ctl.signal });
+clearTimeout(t);
+const j = await r.json();
+setNet(true);
+if (!j.ok) { if (j.error === 'pin') $('pinWarn').classList.remove('hide'); return; }
+$('pinWarn').classList.add('hide');
+const done = new Set(j.done || []);
+S.queue = S.queue.filter(o => !done.has(o.id));
+done.forEach(id => { if (S.visits[id]) S.visits[id].synced = true; });
+if (j.today) S.srv = j.today.map(r => Object.assign(r, { clinic: r.clinic || S.cfg.clinic }));
+const cut = Date.now() - 2 * 86400e3;
+Object.keys(S.visits).forEach(id => { const v = S.visits[id]; if (v.synced && v.ts < cut) delete S.visits[id]; });
+save(); render();
+if (Date.now() - lastDir > 6 * 3600e3) { lastDir = Date.now(); loadDir(); }
+if (S.queue.length && done.size) setTimeout(() => sync(true), 500);
+} catch (e) { setNet(false); }
+finally { syncing = false; }
+}
+async function loadDir() {
+try {
+const r = await fetch(API + '?action=directory&pin=' + encodeURIComponent(S.cfg.pin));
+const j = await r.json(); if (j.ok && j.dir) { S.dir = Object.assign({}, j.dir, S.dir); save(); }
+} catch (e) { }
+}
+$('pend').onclick = () => { toast('جاري الرفع…'); sync(true); };
+window.addEventListener('online', () => sync(true));
+window.addEventListener('offline', () => setNet(false));
+document.addEventListener('visibilitychange', () => { if (!document.hidden) { render(); sync(); } });
+setInterval(() => sync(), 60000);
+setInterval(render, 30000);
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js', { scope: './' }).catch(() => { });
+setNet(navigator.onLine);
+if (!S.cfg) showSetup(); else { render(); view('new'); sync(true); }
+</script>
+</body>
+</html>

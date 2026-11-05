@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1b3151">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="لوحة الطبيب">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="./doc.webmanifest">
+<link rel="apple-touch-icon" href="./icon-doc-192.png">
+<link rel="icon" href="./icon-doc-192.png">
+<link rel="stylesheet" href="./app.css">
+<title>لوحة الطبيب</title>
+<style>
+.wrap{max-width:900px;padding-bottom:24px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px}
+.stat .big{font-size:34px}
+.bar{display:flex;align-items:center;gap:8px;font-size:13px;margin:4px 0}
+.bar i{display:block;height:10px;border-radius:5px;background:var(--gold)}
+.bar span:first-child{min-width:74px;color:var(--mut)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+td,th{padding:7px 4px;border-bottom:1px solid var(--line);text-align:right}
+th{color:var(--mut);font-weight:400;font-size:12px}
+tr.cx td{opacity:.5;text-decoration:line-through}
+.diff{font-weight:700}.diff.neg{color:var(--bad)}.diff.pos{color:var(--warn)}.diff.z{color:var(--ok)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:640px){.two{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="top">
+<h1>المنجز اليوم<small id="sub">—</small></h1>
+<button class="pill" id="ref" style="border:0;color:#fff;cursor:pointer">تحديث ⟳</button>
+</div>
+<div class="wrap">
+<section id="v-pin" class="hide"><div class="card">
+<h2>رمز الطبيب</h2>
+<input id="pin" inputmode="numeric" placeholder="6 أرقام">
+<div style="height:10px"></div><button class="btn" id="pinOk">دخول</button>
+<p class="muted" id="pinMsg"></p>
+</div></section>
+<section id="v-main" class="hide">
+<div id="stale" class="note warn hide"></div>
+<div class="grid">
+<div class="stat"><div class="k">مرضى اليوم</div><div class="big" id="t-count">0</div></div>
+<div class="stat"><div class="k">مجموع اليوم</div><div class="big" id="t-total">0</div><div class="unit">ألف دينار</div></div>
+<div class="stat"><div class="k">مجاني اليوم</div><div class="big" id="t-free">0</div></div>
+<div class="stat"><div class="k">ملغي اليوم</div><div class="big" id="t-cx">0</div></div>
+</div>
+<div class="card"><h2>حسب العيادة — اليوم</h2><div id="t-clinics"></div></div>
+<div class="grid">
+<div class="stat"><div class="k">مرضى الشهر</div><div class="big" id="m-count">0</div></div>
+<div class="stat"><div class="k">مجموع الشهر</div><div class="big" id="m-total">0</div><div class="unit" id="m-unit">ألف دينار</div></div>
+</div>
+<div class="two">
+<div class="card"><h2>أيام الشهر</h2><div id="m-days"></div></div>
+<div class="card"><h2>الفحوص اليوم</h2><div id="t-exams"></div></div>
+</div>
+<div class="card"><h2>إغلاق الصندوق</h2><div id="closes"></div></div>
+<div class="card"><h2>مرضى اليوم</h2><div id="t-list"></div></div>
+<p class="muted"><a id="sheet" href="#" target="_blank" rel="noopener">فتح السجل الكامل (Google Sheets)</a> · <a href="#" id="logout">تغيير الرمز</a></p>
+</section>
+</div>
+<script>
+const API = 'https://script.google.com/macros/s/AKfycbxXLHujH3eyQWD6O4KDpxVItLiYMzk8nym6r_4_n19K8fPz079T28VJDJaNwhsKNwwa/exec';
+const KEY = 'clinicDoc.v1';
+const $ = id => document.getElementById(id);
+let S; try { S = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { S = {}; }
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { } };
+const fmtK = n => (Math.round(Number(n) * 100) / 100).toLocaleString('en-US');
+const big = n => n >= 1000 ? (Math.round(n / 100) / 10).toLocaleString('en-US') + ' مليون' : fmtK(n);
+const esc = s => String(s || '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+function bars(obj, valKey, labelFn) {
+const e = Object.entries(obj); if (!e.length) return '<p class="muted">لا يوجد</p>';
+const max = Math.max(...e.map(([, v]) => typeof v === 'object' ? v[valKey] : v)) || 1;
+return e.map(([k, v]) => { const val = typeof v === 'object' ? v[valKey] : v; return `<div class="bar"><span>${esc(labelFn ? labelFn(k) : k)}</span><i style="width:${Math.max(4, val / max * 100)}%"></i><b>${labelFn && typeof v === 'object' ? fmtK(v.total) + ' (' + v.count + ')' : val}</b></div>`; }).join('');
+}
+function show(d) {
+$('sub').textContent = 'آخر تحديث: ' + d.at;
+const t = d.t, m = d.m;
+$('t-count').textContent = t.count; $('t-total').textContent = fmtK(t.total); $('t-free').textContent = t.free; $('t-cx').textContent = t.cancelled;
+$('t-clinics').innerHTML = Object.keys(t.clinics).length ? Object.entries(t.clinics).map(([k, v]) => `<div class="bar"><span>${esc(k)}</span><b>${v.count} مريض · ${fmtK(v.total)} ألف</b></div>`).join('') : '<p class="muted">ماكو مرضى مرفوعين اليوم بعد.</p>';
+$('m-count').textContent = m.count; $('m-total').textContent = big(m.total); $('m-unit').textContent = m.total >= 1000 ? 'دينار' : 'ألف دينار';
+const days = {}; Object.keys(m.days).sort().forEach(k => days[k] = m.days[k]);
+$('m-days').innerHTML = bars(days, 'total', k => k.slice(5));
+const ex = {}; Object.entries(t.exams).sort((a, b) => b[1] - a[1]).forEach(([k, v]) => ex[k] = v);
+$('t-exams').innerHTML = bars(ex);
+$('closes').innerHTML = d.closes.length ? '<table><tr><th>التاريخ</th><th>العيادة</th><th>المسجّل</th><th>الكاش</th><th>الفرق</th></tr>' + d.closes.map(c => { const df = Number(c.diff); return `<tr><td>${esc(c.date)} ${esc(c.time)}</td><td>${esc(c.clinic)}</td><td>${fmtK(c.expected)}</td><td>${fmtK(c.counted)}</td><td class="diff ${df < 0 ? 'neg' : df > 0 ? 'pos' : 'z'}">${df === 0 ? 'مطابق ✓' : fmtK(df)}</td></tr>`; }).join('') + '</table>' : '<p class="muted">ما صار إغلاق بعد.</p>';
+$('t-list').innerHTML = t.list.length ? '<table><tr><th>الوقت</th><th>المريض</th><th>الفحص</th><th>المبلغ</th></tr>' + t.list.map(r => `<tr class="${r.status === 'ملغي' ? 'cx' : ''}"><td>${esc(r.time)}</td><td>${esc(r.name)}${Object.keys(t.clinics).length > 1 ? ' <span class="muted">(' + esc(r.clinic) + ')</span>' : ''}</td><td>${esc(r.exams)}${r.reason ? ' <span class="muted">— ' + esc(r.reason) + '</span>' : ''}</td><td>${Number(r.price) ? fmtK(r.price) : 'مجاني'}</td></tr>`).join('') + '</table>' : '<p class="muted">لا يوجد</p>';
+$('sheet').href = d.sheet;
+const old = d.today !== new Date(Date.now() + 3 * 3600e3).toISOString().slice(0, 10);
+$('stale').textContent = old ? 'هذي أرقام يوم ' + d.today + ' — اضغط تحديث.' : ''; $('stale').classList.toggle('hide', !old);
+}
+let busy = false;
+async function refresh() {
+if (!S.pin || busy || !API.startsWith('https')) return;
+busy = true; $('ref').textContent = '…';
+try {
+const r = await fetch(API + '?action=summary&pin=' + encodeURIComponent(S.pin));
+const j = await r.json();
+if (!j.ok) { if (j.error === 'pin') { S.pin = ''; save(); boot(); $('pinMsg').textContent = 'الرمز غير صحيح.'; } return; }
+S.last = j; save(); show(j);
+} catch (e) { $('stale').textContent = 'ماكو نت — هذي آخر أرقام محفوظة.'; $('stale').classList.remove('hide'); }
+finally { busy = false; $('ref').textContent = 'تحديث ⟳'; }
+}
+function boot() {
+const has = !!S.pin;
+$('v-pin').classList.toggle('hide', has); $('v-main').classList.toggle('hide', !has);
+if (has) { if (S.last) show(S.last); refresh(); }
+}
+$('pinOk').onclick = () => { S.pin = $('pin').value.replace(/\D/g, ''); save(); boot(); };
+$('ref').onclick = refresh;
+$('logout').onclick = e => { e.preventDefault(); S = {}; save(); boot(); };
+setInterval(() => { if (!document.hidden) refresh(); }, 10 * 60e3);
+document.addEventListener('visibilitychange', () => { if (!document.hidden && S.last && Date.now() - new Date(S.last.at.replace(' ', 'T') + ':00+03:00').getTime() > 5 * 60e3) refresh(); });
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js', { scope: './' }).catch(() => { });
+boot();
+</script>
+</body>
+</html>
