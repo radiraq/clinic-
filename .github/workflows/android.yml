@@ -1,0 +1,29 @@
+name: Build secretary Android app
+on:
+  push:
+    branches: [main]
+    paths: ['android/**', '.github/workflows/android.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '17' }
+      - uses: gradle/actions/setup-gradle@v4
+        with: { gradle-version: '8.9' }
+      - name: Build APK
+        working-directory: android
+        env:
+          KS_PASS: y2BTQa0YA064C5tooa3N3YRY
+          VCODE: ${{ github.run_number }}
+        run: gradle --no-daemon assembleRelease
+      - name: Publish APK
+        env: { GH_TOKEN: '${{ github.token }}' }
+        run: |
+          cp android/app/build/outputs/apk/release/app-release.apk clinic-secretary.apk
+          gh release view secretary-app >/dev/null 2>&1 || gh release create secretary-app --title "تطبيق السكرتارية (أندرويد)" --notes "تطبيق شاشة السكرتارية للأندرويد"
+          gh release upload secretary-app clinic-secretary.apk --clobber

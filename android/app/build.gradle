@@ -1,0 +1,22 @@
+plugins { id 'com.android.application' }
+android {
+    namespace 'iq.clinic.secretary'
+    compileSdk 34
+    defaultConfig {
+        applicationId 'iq.clinic.secretary'
+        minSdk 24
+        targetSdk 34
+        versionCode Integer.parseInt(System.getenv('VCODE') ?: '1')
+        versionName '1.' + (System.getenv('VCODE') ?: '1')
+    }
+    signingConfigs {
+        release {
+            storeFile rootProject.file('keystore/clinic.jks')
+            storePassword System.getenv('KS_PASS')
+            keyAlias 'clinic'
+            keyPassword System.getenv('KS_PASS')
+        }
+    }
+    buildTypes { release { minifyEnabled false; signingConfig signingConfigs.release } }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+}
