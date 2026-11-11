@@ -15,6 +15,9 @@ android {
             storePassword System.getenv('KS_PASS')
             keyAlias 'clinic'
             keyPassword System.getenv('KS_PASS')
+            enableV1Signing true
+            enableV2Signing true
+            enableV3Signing true
         }
     }
     buildTypes { release { minifyEnabled false; signingConfig signingConfigs.release } }
