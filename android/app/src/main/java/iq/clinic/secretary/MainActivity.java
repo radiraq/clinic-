@@ -100,6 +100,7 @@ public class MainActivity extends Activity {
 
     final class Bridge {
         @JavascriptInterface public void alert(String text) { Bell.ring(MainActivity.this, text == null ? "تنبيه جديد" : text); }
+        @JavascriptInterface public void room(String text) { Bell.ring(MainActivity.this, text == null ? "حالة الغرفة" : text, R.raw.room); }
         @JavascriptInterface public boolean isApp() { return true; }
     }
 }

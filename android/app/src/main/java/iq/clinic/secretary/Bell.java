@@ -36,7 +36,9 @@ final class Bell {
         nm.createNotificationChannel(s);
     }
 
-    static void ring(Context ctx, String text) {
+    static void ring(Context ctx, String text) { ring(ctx, text, R.raw.bell); }
+
+    static void ring(Context ctx, String text, int sound) {
         Context c = ctx.getApplicationContext();
         channels(c);
         // Wake the screen briefly so the alert is seen.
@@ -54,7 +56,7 @@ final class Bell {
                 player.setAudioAttributes(new AudioAttributes.Builder()
                         .setUsage(AudioAttributes.USAGE_ALARM)
                         .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build());
-                player.setDataSource(c, android.net.Uri.parse("android.resource://" + c.getPackageName() + "/" + R.raw.bell));
+                player.setDataSource(c, android.net.Uri.parse("android.resource://" + c.getPackageName() + "/" + sound));
                 player.setOnCompletionListener(MediaPlayer::release);
                 player.prepare();
                 player.start();
