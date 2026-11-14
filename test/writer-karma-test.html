@@ -57,7 +57,7 @@ html,body{max-width:100%;overflow-x:hidden}
  .quick button{width:100%}
  dialog{padding:20px}
 }
-.refresh-btn{min-height:44px;padding:8px 14px;border-radius:12px;font-weight:700;white-space:nowrap}@media(max-width:760px){.refresh-btn{padding:8px 12px}.refresh-btn span{display:none}}</style><style>
+.refresh-btn{min-height:44px;padding:8px 14px;border-radius:12px;font-weight:700;white-space:nowrap}@media(max-width:760px){.refresh-btn{padding:8px 12px}.refresh-btn span{display:none}}#enterNote{position:fixed;top:14px;left:0;right:0;margin:0 auto;width:fit-content;z-index:9000;background:#16724b;color:#fff;padding:14px 22px;border-radius:14px;box-shadow:0 10px 35px #0007;font-size:17px;font-weight:700;max-width:92vw;text-align:center;display:flex;gap:14px;align-items:center;animation:enIn .3s ease}#enterNote.hidden{display:none!important}#enterNote small{display:block;font-size:12px;font-weight:400;opacity:.85}#enterNote button{background:#ffffff26;color:#fff;border:0;padding:6px 10px;border-radius:8px}@keyframes enIn{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:none}}</style><style>
 #compactDoctorAlert,#sound,.compact-next,.sound-banner,#soundTests,#soundTestsTitle{display:none!important}
 .w-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
 .w-tabs button.active{background:#16724b;color:#fff;border-color:#16724b}
@@ -332,4 +332,17 @@ var _baseRender=render;render=function(){_baseRender();renderWriter()};
 cloudInit();
 
 render();
+
+(function(){
+ const n=document.createElement('div');n.id='enterNote';n.className='hidden';n.setAttribute('role','status');n.setAttribute('aria-live','polite');
+ n.innerHTML='<div><span class="en-t"></span><small class="en-s"></small></div><button type="button" aria-label="إغلاق">✕</button>';document.body.append(n);
+ let timer;n.querySelector('button').onclick=()=>n.classList.add('hidden');
+ const KEY='enterNoteSeen-'+location.pathname;let seen;try{seen=new Set(JSON.parse(localStorage.getItem(KEY)||'[]'))}catch(e){seen=new Set()}
+ function check(){try{const fresh=list().filter(p=>p.enteredBy==='السكرتارية'&&p.enteredAt&&(Date.now()-new Date(p.enteredAt))<120000&&!seen.has(p.id+'|'+p.enteredAt));
+  if(!fresh.length)return;const p=fresh.sort((a,b)=>new Date(b.enteredAt)-new Date(a.enteredAt))[0];
+  fresh.forEach(x=>seen.add(x.id+'|'+x.enteredAt));try{localStorage.setItem(KEY,JSON.stringify([...seen].slice(-200)))}catch(e){}
+  n.querySelector('.en-t').textContent='دخل للفحص: '+p.name;n.querySelector('.en-s').textContent='الدور '+p.no+(p.exam?' • '+p.exam:'')+' • أدخلته السكرتيرة';
+  n.classList.remove('hidden');clearTimeout(timer);timer=setTimeout(()=>n.classList.add('hidden'),12000)}catch(e){}}
+ const base=render;render=function(){const r=base.apply(this,arguments);check();return r};setInterval(check,2000);check();
+})();
 </script></body></html>
