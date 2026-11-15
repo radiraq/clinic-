@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 """Build the writer (كاتبة) screens from the doctor screens.
 
-The writer screen is the doctor's screen without anything to do with money
-or settings: she sees today's patients exactly like the doctor, copies names
-and ages, registers patients, edits name/age/phone and messages the
-secretary. She cannot enter/finish/cancel patients, and has no cash,
-expenses, settings or activity-log pages.
+The writer screen is exactly the doctor's screen (same layout and the same
+patient actions) minus everything about money: no cash/accounts, expenses,
+settings (prices, staff accounts), activity log, backup or amounts in the
+patient history. She can register patients. Messages are signed "الكاتبة".
 
 Run after every change to the doctor screens:
     python3 tools/make-writer.py
@@ -25,14 +24,13 @@ PAIRS = [
 ]
 
 WRITER_LAYER = r"""<style>
-#nav [data-page=cash],#nav [data-page=expenses],#nav [data-page=settings],#nav [data-page=audit],.clinic-switch,#cash,#expenses,#settings,#audit,#addQuickPhrase,#previousPatient,#followingPatient,#sound,.out-mini{display:none!important}
+#nav [data-page=cash],#nav [data-page=expenses],#nav [data-page=settings],.clinic-switch,#cash,#expenses,#settings,#audit>.card:last-child,#backupBtn,#audit th:nth-child(4),#historyRows td:nth-child(4){display:none!important}
 .w-done-tag{font-size:12px;color:#7bdbc2;margin-inline-start:6px;font-weight:700}
 </style>
 <script>
 (function(){
- // Writer layer: no money, no settings — registration, copy, edit and messages only.
- const FORBIDDEN=['cash','expenses','settings','audit'];
- const KEEP=/^(✎|✎ تعديل|نسخ الاسم والعمر)/;
+ // Writer layer: the doctor's screen minus anything about money.
+ const FORBIDDEN=['cash','expenses','settings'];
  const CK='writerCopied.'+CLINIC_ID;
  function copied(){try{const x=JSON.parse(localStorage.getItem(CK)||'{}');return x.day===day()?x:{day:day(),ids:[]}}catch(e){return{day:day(),ids:[]}}}
  window.onCopied=function(p){if(!p||!p.id)return;const c=copied();if(!c.ids.includes(p.id))c.ids.push(p.id);try{localStorage.setItem(CK,JSON.stringify(c))}catch(e){}tidy()};
@@ -40,17 +38,15 @@ WRITER_LAYER = r"""<style>
   if(FORBIDDEN.includes(page)){document.querySelector('[data-page=queue]').click();return}
   const ids=copied().ids;
   document.querySelectorAll('#rows tr').forEach(tr=>{
-   const td=tr.querySelector('td:last-child');
-   if(td&&tr.children.length>1)td.querySelectorAll('button').forEach(b=>{if(!b.classList.contains('cp')&&!KEEP.test(b.textContent.trim()))b.remove()});
    const nm=tr.querySelector('td:nth-child(2)');
    if(nm){const has=nm.querySelector('.w-done-tag');if(tr.dataset.id&&ids.includes(tr.dataset.id)){if(!has)nm.append(el('span','✓ نسختيه','w-done-tag'))}else if(has)has.remove()}
   });
-  const cur=document.getElementById('current');if(cur)cur.querySelectorAll('button').forEach(b=>b.remove());
  }
  const base=render;render=function(){const r=base.apply(this,arguments);try{tidy()}catch(e){console.error(e)}return r};
  const lg=document.querySelector('aside .logo');if(lg)lg.textContent='✎ شاشة الكاتبة';
  document.querySelector('.aside-foot').innerHTML='الكاتبة — عيادة '+clinic()+'<br>نسخة تجريبية • بيانات وهمية فقط';
  $('heading').textContent='شاشة الكاتبة';
+ const au=document.querySelector('#nav [data-page=audit]');if(au)au.textContent='≡ سجل المرضى';
  try{tidy()}catch(e){}
 })();
 </script></body></html>"""
@@ -71,12 +67,10 @@ def build(src, dst, label, manifest, title, apple):
     s = re.sub(r'apple-mobile-web-app-title" content="[^"]*"', f'apple-mobile-web-app-title" content="{apple}"', s, count=1)
     s = s.replace('href="../icon-doc-192.png"', 'href="../icon-sec-192.png"')
     # Role: writer; no cash; may register.
-    s = must_replace(s, "const role=()=>'doctor',", "const role=()=>'writer',", what='role')
-    s = must_replace(s, "canCash=()=>role()!=='doctor',canRegister=()=>role()==='doctor'||canCash(),",
-                     "canCash=()=>false,canRegister=()=>true,", what='canCash/canRegister')
-    s = must_replace(s, "secretary:'السكرتارية'}[role()])", "secretary:'السكرتارية',writer:'الكاتبة'}[role()])", what='roleName')
-    # Silent like the doctor's screen (bell only on the secretary's screen).
-    s = must_replace(s, "playSound(text){if(role()==='doctor'||", "playSound(text){if(role()!=='secretary'||", what='playSound')
+    # Same powers as the doctor's screen (enter, finish, defer, reorder, post void...),
+    # but every message and action is signed as the writer.
+    s = must_replace(s, "roleName=()=>({admin:'المدير',doctor:'الطبيب',secretary:'السكرتارية'}[role()])",
+                     "roleName=()=>'الكاتبة'", what='roleName')
     s = must_replace(s, "$('heading').textContent='عيادتي';", "$('heading').textContent='شاشة الكاتبة';", what='heading')
     # Login: writer account (username + password) instead of the doctor's password.
     s, n = re.subn(r'<dialog id="doctorLogin".*?</dialog>', lambda m: LOGIN, s, count=1, flags=re.S)
@@ -98,7 +92,7 @@ $('secretaryLogout').onclick=async()=>{if(await askDialog('تسجيل الخرو
     s = s.replace('هذا الحساب مو لهاي العيادة', 'هذا الحساب مو حساب كاتبة لهاي العيادة')
     # Writer heading inside the login dialog follows the clinic.
     s = s.replace('دخول الكاتبة — الفلوجة', 'دخول الكاتبة — ' + label)
-    # Writer layer (hide money/settings, keep only copy+edit actions).
+    # Writer layer (hide everything about money).
     if not s.rstrip().endswith('</body></html>'): sys.exit('make-writer: unexpected file end')
     s = s.rstrip()[:-len('</body></html>')] + WRITER_LAYER + '\n'
     (TEST / dst).write_text(s, encoding='utf-8')
