@@ -213,7 +213,7 @@ setInterval(()=>{try{if(list().some(p=>p.status===OUT))scheduleRender()}catch{}}
 
 async function copyText(t){try{await navigator.clipboard.writeText(t);return true}catch{const ta=el('textarea');ta.value=t;ta.setAttribute('readonly','');ta.style.position='fixed';ta.style.opacity='0';document.body.append(ta);ta.select();let ok=false;try{ok=document.execCommand('copy')}catch{}ta.remove();return ok}}
 function cpBtn(label,value,cls,p){const b=el('button',undefined,'cp'+(cls?' '+cls:''));b.type='button';b.append(el('span',label),el('small','⧉'));b.title='اضغط للنسخ';b.onclick=async e=>{e.stopPropagation();if(await copyText(value)){try{window.onCopied&&window.onCopied(p)}catch(e){}b.classList.add('ok');b.lastChild.textContent='✓';toast('تم النسخ: '+value);setTimeout(()=>{b.classList.remove('ok');b.lastChild.textContent='⧉'},1500)}else toast('تعذر النسخ؛ حدّد النص وانسخه يدويًا')};return b}
-var BUILD='20261115185500';
+var BUILD='20261115193000';
 
 // ===== Cloud version 0.3 (Firebase) — identical in both screens =====
 var CLINIC_ID='karma',DOCTOR_EMAIL='doctor@fallujah.clinic',EMAIL_DOMAIN='fallujah.clinic';
@@ -398,4 +398,44 @@ render();
  function all(){try{renderNow()}catch(e){}try{tidyRows()}catch(e){}try{renderSecCash()}catch(e){}}
  const base=render;render=function(){const r=base.apply(this,arguments);all();return r};all();
 })();
-</script></body></html>
+</script><style id="declutter-v04">
+/* v0.4: less crowded today's-patients list — nothing cut off */
+#rows .cp,#nowCard .cp{border-color:transparent;padding:2px 4px}
+#rows .cp small,#nowCard .cp small{opacity:.45;font-size:13px}
+#rows .cp:hover,#nowCard .cp:hover{border-color:#77889988}
+#rows .cp.ok small,#nowCard .cp.ok small{opacity:1}
+#rows .cp.age{font-weight:600}
+#rows .badge{white-space:nowrap;font-size:13px}
+#rows button.ghost{background:transparent;color:var(--muted);border-color:transparent}
+#rows button.ghost:hover{color:var(--ink);border-color:var(--line)}
+#rows .cp-both{font-size:12px;color:var(--muted);border:1px solid var(--line)!important;padding:5px 9px!important;font-weight:600}
+@media(min-width:761px){
+ body[data-page=queue] #queue .grid{grid-template-columns:minmax(0,1fr)}
+ body[data-page=queue] #queue .side{grid-template-columns:minmax(0,1fr)}
+ #queue table{white-space:normal}
+ #rows td{padding:14px 10px;vertical-align:middle}
+ #rows td.num{width:52px;font-size:18px}
+ #rows td:nth-child(3){width:130px}
+ #rows td:last-child{width:390px}
+ #rows td:last-child button{margin:3px 0 3px 6px;padding:8px 12px;font-size:14px}
+ #rows td:last-child>.cp{display:inline-flex;vertical-align:middle;margin:3px 0 3px 6px}#rows td:last-child .cp-both{padding:6px 10px!important;font-size:12px}
+ #rows td:nth-child(2){line-height:1.6}
+}
+@media(max-width:760px){
+ #rows td:last-child button.ghost,#rows td:last-child .edit-mini{flex:0 0 auto!important}#rows td:last-child .cp-both{font-size:13px!important;flex:1 1 auto}
+}
+</style>
+<script>
+(function(){
+ function tidy(){try{document.querySelectorAll('#rows tr').forEach(function(tr){
+  tr.querySelectorAll('td:last-child button').forEach(function(b){
+   if(b.classList.contains('cp'))return;var t=b.textContent.trim();
+   if(t==='إلغاء الفحص'){b.textContent='إلغاء';b.title='إلغاء الفحص'}
+   if(t==='إلغاء الفحص'||t==='إلغاء'||t==='تأجيل')b.classList.add('ghost')});
+  var both=tr.querySelector('.cp-both span');if(both&&both.textContent!=='الاسم + العمر'){both.textContent='الاسم + العمر';both.parentNode.title='نسخ الاسم والعمر معًا'}
+ })}catch(e){}}
+ if(typeof render==='function'){var base=render;render=function(){var r=base.apply(this,arguments);tidy();return r}}
+ tidy();
+})();
+</script>
+</body></html>
