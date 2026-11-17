@@ -538,35 +538,46 @@ document.querySelectorAll('#nav button[data-page]').forEach(b=>{const t=S[b.data
  const st=document.createElement('style');
  st.textContent='.rf-badge{display:inline-block;margin-top:4px;padding:2px 8px;border-radius:8px;background:#7a1f2b;color:#ffd6dc;font-weight:700;font-size:13px}.rf-card{margin-top:16px}.rf-card table{width:100%}.rf-card td,.rf-card th{padding:6px 8px;text-align:right}.rf-total{color:#ff8a9a;font-weight:800}';
  document.head.append(st);
- function refundRows(){
-  const L=list();
-  return (S.ledger||[]).filter(l=>l.clinic===clinic()&&Number(l.amount)<0&&/^استرداد/.test(l.label||'')).map(l=>{
-   const p=L.find(x=>x.id===l.patientId);
-   const name=p?p.name:String(l.reason||'').split(' — ')[0];
-   const why=String(l.reason||'').split(' — ').slice(1).join(' — ')||l.label;
-   const by=l.by||(p&&(p.refunds||[]).find(r=>r.at===l.at)?.by)||(p&&/إلغاء/.test(l.label)?p.statusBy:'')||'—';
-   return {at:l.at,name,amount:-Number(l.amount),why,by};
-  });
+ function refundTable(R){
+  const card=el('div',undefined,'rf-card');
+  card.append(el('h3','↩ المبالغ المرجعة'));
+  if(!R.length){card.append(el('p','ما اكو أي استرجاع بهاي الفترة','muted'));return card}
+  card.append(el('p','المجموع: '+money(R.reduce((a,r)=>a+r.amount,0))+' • عدد المرضى: '+R.length,'rf-total'));
+  const tw=el('div',undefined,'tablewrap'),t=el('table'),th=el('thead'),hr=el('tr');
+  ['التاريخ','الوقت','المريض','المبلغ المرجع','السبب','بواسطة'].forEach(x=>hr.append(el('th',x)));th.append(hr);t.append(th);
+  const tb=el('tbody');R.slice().sort((a,b)=>String(b.at).localeCompare(String(a.at))).forEach(r=>{const tr=el('tr');[String(r.day||'').slice(5).split('-').reverse().join('/'),time(r.at),r.name,money(r.amount),r.why,r.by].forEach(v=>tr.append(el('td',String(v))));tb.append(tr)});
+  t.append(tb);tw.append(t);card.append(tw);return card;
  }
+ function toRow(l,P){
+  const p=P.find(x=>x.id===l.patientId);
+  const name=p?p.name:String(l.reason||'').split(' — ')[0];
+  const why=String(l.reason||'').split(' — ').slice(1).join(' — ')||l.label;
+  const by=l.by||(p&&(p.refunds||[]).find(r=>r.at===l.at)?.by)||(p&&/إلغاء/.test(l.label||'')?p.statusBy:'')||'—';
+  return {day:l.day||String(l.at||'').slice(0,10),at:l.at,name,amount:-Number(l.amount),why,by};
+ }
+ const isRefund=l=>l.clinic===clinic()&&Number(l.amount)<0&&/^استرداد/.test(l.label||'');
  const _rcs=renderCashSummary;
  renderCashSummary=function(){
   _rcs();const root=$('cashSummary');if(!root)return;
-  const R=refundRows();const card=el('div',undefined,'rf-card');
-  const total=R.reduce((a,r)=>a+r.amount,0);
-  const h=el('h3','↩ المبالغ المرجعة اليوم');card.append(h);
-  if(!R.length){card.append(el('p','ما اكو أي استرجاع اليوم','muted'));root.append(card);return}
-  card.append(el('p','المجموع: '+money(total)+' • عدد المرضى: '+R.length,'rf-total'));
-  const tw=el('div',undefined,'tablewrap'),t=el('table'),th=el('thead'),hr=el('tr');
-  ['الوقت','المريض','المبلغ المرجع','السبب','بواسطة'].forEach(x=>hr.append(el('th',x)));th.append(hr);t.append(th);
-  const tb=el('tbody');R.slice().reverse().forEach(r=>{const tr=el('tr');[time(r.at),r.name,money(r.amount),r.why,r.by].forEach(v=>tr.append(el('td',String(v))));tb.append(tr)});
-  t.append(tb);tw.append(t);card.append(tw);root.append(card);
+  const L=list();const R=(S.ledger||[]).filter(isRefund).map(l=>toRow(l,L));
+  const c=refundTable(R);c.querySelector('h3').textContent='↩ المبالغ المرجعة اليوم';root.append(c);
  };
- const _render=render;
- render=function(){
-  _render.apply(this,arguments);
-  try{const L=list();document.querySelectorAll('#rows tr[data-id]').forEach(tr=>{const p=L.find(x=>String(x.id)===tr.dataset.id);if(!p||!(p.refunded>0))return;const td=tr.children[2];if(!td||td.querySelector('.rf-badge'))return;const by=(p.refunds||[]).slice(-1)[0]?.by||(p.status==='ملغي'?p.statusBy:'')||'';td.append(document.createElement('br'),el('span','↩ مُرجع '+money(p.refunded)+(by?' • '+by:''),'rf-badge'))})}catch(e){}
- };
- try{render()}catch(e){}
+ if(typeof renderAgg==='function'){
+  const _agg=renderAgg;
+  renderAgg=function(root,items,prev,opts){
+   _agg.apply(this,arguments);
+   const range=opts&&opts.chart?[opts.chart[0],opts.chart[1]]:(typeof accFrom!=='undefined'?[accFrom,accTo]:null);
+   if(!range||!range[0]||!range[1]||!window.FB||!cloud||!cloud.db)return;
+   const box=el('div');box.append(el('p','↩ جارٍ تحميل المبالغ المرجعة…','muted'));root.append(box);
+   const q=c=>FB.getDocs(FB.query(FB.collection(cloud.db,'clinics',CLINIC_ID,c),FB.where('day','>=',range[0]),FB.where('day','<=',range[1]))).then(s=>s.docs.map(d=>d.data()));
+   Promise.all([q('ledger'),q('patients')]).then(([LD,P])=>{
+    const seen=new Set(),R=[];
+    LD.concat(range[1]>=day()?(S.ledger||[]).map(l=>Object.assign({day:day()},l)):[]).filter(isRefund).forEach(l=>{const k=(l.at||'')+'|'+l.amount+'|'+(l.reason||'');if(seen.has(k))return;seen.add(k);R.push(toRow(l,P.concat(list())))});
+    box.replaceWith(refundTable(R));
+   }).catch(e=>{console.error(e);box.replaceChildren(el('p','تعذّر تحميل المبالغ المرجعة','muted'))});
+  };
+ }
 })();
 </script>
+
 </body></html>
