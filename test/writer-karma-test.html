@@ -215,7 +215,7 @@ setInterval(()=>{try{if(list().some(p=>p.status===OUT))scheduleRender()}catch{}}
 
 async function copyText(t){try{await navigator.clipboard.writeText(t);return true}catch{const ta=el('textarea');ta.value=t;ta.setAttribute('readonly','');ta.style.position='fixed';ta.style.opacity='0';document.body.append(ta);ta.select();let ok=false;try{ok=document.execCommand('copy')}catch{}ta.remove();return ok}}
 function cpBtn(label,value,cls,p){const b=el('button',undefined,'cp'+(cls?' '+cls:''));b.type='button';b.append(el('span',label),el('small','⧉'));b.title='اضغط للنسخ';b.onclick=async e=>{e.stopPropagation();if(await copyText(value)){try{window.onCopied&&window.onCopied(p)}catch(e){}b.classList.add('ok');b.lastChild.textContent='✓';toast('تم النسخ: '+value);setTimeout(()=>{b.classList.remove('ok');b.lastChild.textContent='⧉'},1500)}else toast('تعذر النسخ؛ حدّد النص وانسخه يدويًا')};return b}
-var BUILD='20261116111500';
+var BUILD='20261118175259';
 
 // ===== Cloud version 0.3 (Firebase) — identical in both screens =====
 var CLINIC_ID='karma',DOCTOR_EMAIL='doctor@fallujah.clinic',EMAIL_DOMAIN='fallujah.clinic';
@@ -291,7 +291,7 @@ function autoCollect(p){if(!p)return false;const amt=p.base-p.discount;if(amt>0&
 // Any screen fixes patients registered without collection (e.g. from a phone still on an older version). Same record id on every screen, so nothing is counted twice.
 var reconT=null;function scheduleReconcile(){clearTimeout(reconT);reconT=setTimeout(()=>{if(!cloud.user)return;let ch=false;S.patients.forEach(p=>{if(autoCollect(p))ch=true});if(ch){save();render()}},1500)}
 // Keep every device on the newest version: check every 2 minutes and when the page comes back to the front.
-function checkVersion(){fetch('version.txt?t='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(v=>{v=v.trim();if(v&&v!==BUILD){const busy=($('name')&&$('name').value.trim())||document.querySelector('dialog[open]:not(#secretaryLogin):not(#doctorLogin)');if(busy){toast('نسخة جديدة جاهزة — تتحدث الصفحة بعد ما تخلص التسجيل');return}location.replace(location.pathname+'?v='+v)}}).catch(()=>{})}
+function checkVersion(){fetch('version.txt?t='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(v=>{v=v.trim();if(v&&v!==BUILD){if(new URLSearchParams(location.search).get('v')===v)return;const busy=($('name')&&$('name').value.trim())||document.querySelector('dialog[open]:not(#secretaryLogin):not(#doctorLogin)');if(busy){toast('نسخة جديدة جاهزة — تتحدث الصفحة بعد ما تخلص التسجيل');return}location.replace(location.pathname+'?v='+v)}}).catch(()=>{})}
 setInterval(checkVersion,120000);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')checkVersion()});
 
 // iPhone: play the bell even when the silent switch is on (Safari 16.4+).
