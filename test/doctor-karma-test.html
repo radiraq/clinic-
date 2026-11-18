@@ -215,7 +215,7 @@ setInterval(()=>{try{if(list().some(p=>p.status===OUT))scheduleRender()}catch{}}
 
 async function copyText(t){try{await navigator.clipboard.writeText(t);return true}catch{const ta=el('textarea');ta.value=t;ta.setAttribute('readonly','');ta.style.position='fixed';ta.style.opacity='0';document.body.append(ta);ta.select();let ok=false;try{ok=document.execCommand('copy')}catch{}ta.remove();return ok}}
 function cpBtn(label,value,cls,p){const b=el('button',undefined,'cp'+(cls?' '+cls:''));b.type='button';b.append(el('span',label),el('small','⧉'));b.title='اضغط للنسخ';b.onclick=async e=>{e.stopPropagation();if(await copyText(value)){try{window.onCopied&&window.onCopied(p)}catch(e){}b.classList.add('ok');b.lastChild.textContent='✓';toast('تم النسخ: '+value);setTimeout(()=>{b.classList.remove('ok');b.lastChild.textContent='⧉'},1500)}else toast('تعذر النسخ؛ حدّد النص وانسخه يدويًا')};return b}
-var BUILD='20261118183054';
+var BUILD='20261118183201';
 
 // ===== Cloud version 0.3 (Firebase) — identical in both screens =====
 var CLINIC_ID='karma',DOCTOR_EMAIL='doctor@fallujah.clinic',EMAIL_DOMAIN='fallujah.clinic';
@@ -722,6 +722,16 @@ body:not(.dark) .ref-tag{color:#1d4f7a;background:#dbeafe}
  function regAt(p){if(p.regAt)return p.regAt;const l=(S.ledger||[]).find(x=>x._id==='pay-'+p.id);if(l&&l.at)return l.at;const a=(S.audit||[]).filter(x=>String(x.text||x.action||'').startsWith('إضافة '+p.name)).map(x=>x.at).sort()[0];return a||''}
  function tag(){document.querySelectorAll('#rows tr[data-id]').forEach(tr=>{const p=list().find(x=>x.id===tr.dataset.id),td=tr.querySelector('td.num')||tr.querySelector('td');if(!p||!td)return;const at=regAt(p);let t=td.querySelector('.reg-t');if(!at){if(t)t.remove();return}if(!t){t=el('span','','reg-t');td.append(t)}const s='🕒 '+time(at);if(t.textContent!==s)t.textContent=s;t.title='وقت التسجيل'})}
  const base=render;render=function(){const r=base.apply(this,arguments);try{tag()}catch(e){console.error(e)}return r};try{tag()}catch(e){}
+})();
+</script>
+<style id="v11clock">#clockWarn{position:fixed;top:0;left:0;right:0;z-index:9500;background:#b91c1c;color:#fff;font-weight:800;font-size:15px;text-align:center;padding:10px 12px;line-height:1.6}#clockWarn.hidden{display:none}#clockWarn small{display:block;font-weight:500;font-size:12px;opacity:.9}</style>
+<script id="v11js">
+(function(){
+ const w=document.createElement('div');w.id='clockWarn';w.className='hidden';w.setAttribute('role','alert');document.body.append(w);
+ function fmt(ms){const m=Math.round(Math.abs(ms)/60000);if(m>=60){const h=Math.floor(m/60),r=m%60;return h+' ساعة'+(r?' و'+r+' دقيقة':'')}return m+' دقيقة'}
+ function check(){const t0=Date.now();fetch('version.txt?clock='+t0,{cache:'no-store'}).then(r=>{const d=r.headers.get('date');if(!d)return;const t1=Date.now(),server=new Date(d).getTime()+500;if(!Number.isFinite(server))return;const off=(t0+t1)/2-server;
+  if(Math.abs(off)>5*60000){w.innerHTML='';w.append('⚠️ ساعة هذا الجهاز غلط — '+(off>0?'متقدمة':'متأخرة')+' '+fmt(off));const s=document.createElement('small');s.textContent='الأوقات المسجلة راح تطلع غلط. صححي الساعة: الإعدادات ← التاريخ والوقت ← شغّلي «الوقت التلقائي» وتأكدي من ص/م.';w.append(s);w.classList.remove('hidden')}else w.classList.add('hidden')}).catch(()=>{})}
+ check();setInterval(check,10*60000);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')check()});
 })();
 </script>
 </body></html>
