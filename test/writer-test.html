@@ -215,7 +215,7 @@ setInterval(()=>{try{if(list().some(p=>p.status===OUT))scheduleRender()}catch{}}
 
 async function copyText(t){try{await navigator.clipboard.writeText(t);return true}catch{const ta=el('textarea');ta.value=t;ta.setAttribute('readonly','');ta.style.position='fixed';ta.style.opacity='0';document.body.append(ta);ta.select();let ok=false;try{ok=document.execCommand('copy')}catch{}ta.remove();return ok}}
 function cpBtn(label,value,cls,p){const b=el('button',undefined,'cp'+(cls?' '+cls:''));b.type='button';b.append(el('span',label),el('small','⧉'));b.title='اضغط للنسخ';b.onclick=async e=>{e.stopPropagation();if(await copyText(value)){try{window.onCopied&&window.onCopied(p)}catch(e){}b.classList.add('ok');b.lastChild.textContent='✓';toast('تم النسخ: '+value);setTimeout(()=>{b.classList.remove('ok');b.lastChild.textContent='⧉'},1500)}else toast('تعذر النسخ؛ حدّد النص وانسخه يدويًا')};return b}
-var BUILD='20261118183201';
+var BUILD='20261118183834';
 
 // ===== Cloud version 0.3 (Firebase) — identical in both screens =====
 var CLINIC_ID='fallujah',DOCTOR_EMAIL='doctor@fallujah.clinic',EMAIL_DOMAIN='fallujah.clinic';
@@ -713,12 +713,14 @@ body:not(.dark) .ref-tag{color:#1d4f7a;background:#dbeafe}
  fill();attach();
 })();
 </script>
-<style id="v10reg">.reg-t{display:block;font-size:11px;font-weight:600;color:var(--muted);margin-top:3px;white-space:nowrap;direction:rtl}@media(max-width:760px){tbody td.num .reg-t{display:inline-block;margin:0 6px 0 0}}</style>
+<style id="v10reg">.reg-e{display:block;font-size:12px;font-weight:700;color:#7bdbc2;margin-top:2px;white-space:nowrap}.reg-e[data-lvl='1']{color:#f5c26b}.reg-e[data-lvl='2']{color:#ff8a8a}@media(max-width:760px){tbody td.num .reg-e{display:inline-block;margin:0 6px 0 0}}.reg-t{display:block;font-size:11px;font-weight:600;color:var(--muted);margin-top:3px;white-space:nowrap;direction:rtl}@media(max-width:760px){tbody td.num .reg-t{display:inline-block;margin:0 6px 0 0}}</style>
 <script id="v10js">
 (function(){
  // When was this patient registered?
  function regAt(p){if(p.regAt)return p.regAt;const l=(S.ledger||[]).find(x=>x._id==='pay-'+p.id);if(l&&l.at)return l.at;const a=(S.audit||[]).filter(x=>String(x.text||x.action||'').startsWith('إضافة '+p.name)).map(x=>x.at).sort()[0];return a||''}
- function tag(){document.querySelectorAll('#rows tr[data-id]').forEach(tr=>{const p=list().find(x=>x.id===tr.dataset.id),td=tr.querySelector('td.num')||tr.querySelector('td');if(!p||!td)return;const at=regAt(p);let t=td.querySelector('.reg-t');if(!at){if(t)t.remove();return}if(!t){t=el('span','','reg-t');td.append(t)}const s='🕒 '+time(at);if(t.textContent!==s)t.textContent=s;t.title='وقت التسجيل'})}
+ function tag(){document.querySelectorAll('#rows tr[data-id]').forEach(tr=>{const p=list().find(x=>x.id===tr.dataset.id),td=tr.querySelector('td.num')||tr.querySelector('td');if(!p||!td)return;const at=regAt(p);let t=td.querySelector('.reg-t');if(!at){if(t)t.remove();return}if(!t){t=el('span','','reg-t');td.append(t)}const s='🕒 '+time(at);if(t.textContent!==s)t.textContent=s;t.title='وقت التسجيل';let e=td.querySelector('.reg-e');const live=!['مكتمل','ملغي'].includes(p.status);if(!live){if(e)e.remove();return}if(!e){e=el('span','','reg-e');td.append(e)}const ago=since(at);if(e.textContent!==ago.t)e.textContent=ago.t;e.dataset.lvl=ago.lvl})}
+ function since(at){const m=Math.max(0,Math.floor((Date.now()-new Date(at))/60000));const h=Math.floor(m/60),r=m%60;return{t:'⏳ '+(m<1?'هسه':m<60?m+' د':h+' س'+(r?' و'+r+' د':'')),lvl:m>=60?'2':m>=30?'1':'0'}}
+ setInterval(()=>{try{tag()}catch(e){}},30000);
  const base=render;render=function(){const r=base.apply(this,arguments);try{tag()}catch(e){console.error(e)}return r};try{tag()}catch(e){}
 })();
 </script>
