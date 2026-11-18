@@ -661,7 +661,7 @@ body:not(.dark) .ref-tag{color:#1d4f7a;background:#dbeafe}
  const NEW='__new__';
  // First list = the referring doctors from the report template (male.docx); added once if the clinic has none yet.
  const SEED=["د. عبد الحكيم خلف الجميلي", "د. مروه باسم يار مراد", "د. باسم عطا الله", "د. احمد ابرهيم", "د. ضياء مجول", "د. ضياء الجميلي", "د. ايناس شاكر", "د. حسن فتحي", "د. احمد حازم", "د. وليد خالد", "د. ثائر بشير", "د. مازن عبدالجبار", "د. هديل الهلالي", "د. اكرم نواف", "د. عادل عويد", "د. عمر عصام", "د. سلام العلي", "د. علي النايل", "د. كمال رجا الحداد", "د. محمد اسماعيل داوود", "د. غادة وائل تحسين", "د. علي رافع الجنابي", "د. علي حياد", "د. مصطفى واثق مديح", "د. سعد عبدالقادر الدراجي", "د. إسحاق فارس حمادي", "د. عدنان جيجان عبيد", "د. أسماء صالح", "د. احمد عبدالجبار", "د. مصطفى لؤي بدر الدين", "د. رباب حامد فرحان", "د. لؤي احمد العاني", "د. أسامة إسماعيل", "د. عبدالعزيز احمد مرشد", "د. مهند حسين علوان", "د. حنان خميس", "د. محمد فالح", "د. إبراهيم مصطفى", "د. انمار حامد", "د. طه محمد فليح", "د. فواز مهدي", "د. مصطفى عباس", "د. زياد حماد", "د. رغد احمد", "د. ستار عبد حمود", "د. اميل فاروق", "د. عمار حميد هويدي", "د. وليد السعد", "د. حارث عبدالرحمن الكبيسي", "د. محمد فوزي"];
- S.referrers=S.referrers||[];
+ S.referrers=S.referrers||[];S.refFavs=S.refFavs||[];
  const key=t=>normText(String(t).replace(/^د\.\s*/,'')).replace(/[ةه]$/,'ه').replace(/ى/g,'ي');
  const sortAr=a=>a.slice().sort((x,y)=>key(x).localeCompare(key(y),'ar'));
  const same=(a,b)=>normText(a)===normText(b);
@@ -684,26 +684,30 @@ body:not(.dark) .ref-tag{color:#1d4f7a;background:#dbeafe}
  }
  // A <select> of referrers: «بدون», the names, then «＋ إضافة طبيب جديد».
  function build(sel,val){const v=val??sel.value;sel.replaceChildren();const o0=el('option','— بدون —');o0.value='';sel.append(o0);
-  const names=sortAr(S.referrers||[]);if(v&&v!==NEW&&!names.some(x=>x===v))names.unshift(v);
-  names.forEach(n=>{const o=el('option',n);o.value=n;sel.append(o)});const on=el('option','＋ إضافة طبيب جديد…');on.value=NEW;sel.append(on);
+  const all=sortAr(S.referrers||[]),fav=all.filter(isFav),rest=all.filter(n=>!isFav(n));if(v&&v!==NEW&&!all.some(x=>x===v))rest.unshift(v);
+  const grp=(label,list)=>{if(!list.length)return;const g=document.createElement('optgroup');g.label=label;list.forEach(n=>{const o=el('option',(isFav(n)?'⭐ ':'')+n);o.value=n;g.append(o)});sel.append(g)};
+  if(fav.length){grp('⭐ المفضلة',fav);grp('كل الأطباء',rest)}else rest.forEach(n=>{const o=el('option',n);o.value=n;sel.append(o)});const on=el('option','＋ إضافة طبيب جديد…');on.value=NEW;sel.append(on);
   sel.value=v&&v!==NEW?v:''}
+ function isFav(n){return (S.refFavs||[]).some(x=>same(x,n))}
+ async function toggleFav(n){try{const snap=await FB.getDoc(cfgRef());const cur=(snap.exists()&&Array.isArray(snap.data().referrerFavs))?snap.data().referrerFavs:[];const on=cur.some(x=>same(x,n));const next=on?cur.filter(x=>!same(x,n)):cur.concat(n);await FB.setDoc(cfgRef(),{referrerFavs:next},{merge:true});S.refFavs=next;audit((on?'إزالة من المفضلة — ':'إضافة للمفضلة — ')+n);fill();toast(on?'شلته من المفضلة':'⭐ صار بالمفضلة')}catch(err){toast('تعذر الحفظ: '+(err.code||err.message))}}
  function wire(sel){if(sel.dataset.refWired)return;sel.dataset.refWired='1';sel.addEventListener('change',async()=>{if(sel.value!==NEW)return;sel.value='';const n=await addReferrer();build(sel,n||'')})}
  window.refSelect=function(val){const s=el('select');build(s,val||'');wire(s);return s};
  function fill(){const r=$('referrer');if(r){build(r);wire(r)}renderRefSettings();try{tagRows()}catch(e){}}
  // Doctor settings: list with delete.
  function renderRefSettings(){const st=$('settings');if(!st||role()!=='doctor')return;let c=$('refCard');
-  if(!c){c=el('div',undefined,'card');c.id='refCard';c.style.marginBottom='20px';c.append(el('h2','👨‍⚕️ الأطباء المحولين'),el('p','القائمة مشتركة لكل شاشات العيادة (الطبيب، السكرتيرة، الكاتبة) وتنضاف الأسماء من أي شاشة وقت التسجيل.','muted'));
+  if(!c){c=el('div',undefined,'card');c.id='refCard';c.style.marginBottom='20px';c.append(el('h2','👨‍⚕️ الأطباء المحولين'),el('p','القائمة مشتركة لكل شاشات العيادة (الطبيب، السكرتيرة، الكاتبة) وتنضاف الأسماء من أي شاشة وقت التسجيل. اضغط ☆ يم الاسم حتى يصير بالمفضلة ويطلع أول القائمة.','muted'));
    const a=el('div',undefined,'actions');a.append(btn('＋ إضافة طبيب',()=>addReferrer()));c.append(a);const l=el('div');l.id='refList';c.append(l);st.prepend(c)}
   const l=$('refList');l.replaceChildren();const names=sortAr(S.referrers||[]);if(!names.length)l.append(el('small','ماكو أسماء بعد','muted'));
-  names.forEach(n=>{const s=el('span',n);s.append(btn('✕',()=>removeReferrer(n)));l.append(s)})}
+  const fv=names.filter(isFav);names.sort((a,b)=>isFav(b)-isFav(a));names.forEach(n=>{const s=el('span',n),st=btn(isFav(n)?'⭐':'☆',()=>toggleFav(n));st.title=isFav(n)?'شيل من المفضلة':'خليه بالمفضلة (يطلع أول القائمة)';s.prepend(st);s.append(btn('✕',()=>removeReferrer(n)));l.append(s)})}
  // Show the referrer next to the patient's name in today's list.
  function tagRows(){document.querySelectorAll('#rows tr[data-id]').forEach(tr=>{const p=list().find(x=>x.id===tr.dataset.id),td=tr.querySelector('td:nth-child(2)');if(!td)return;
   let t=td.querySelector('.ref-tag');if(p&&p.referrer){if(!t){t=el('span','','ref-tag');td.append(t)}t.textContent='↩ '+p.referrer}else if(t)t.remove()})}
  // Live list from the server.
- let unsub=null,forUid='';
+ let unsub=null,forUid='',seeding=false,favSeen='';
+ function seedOnce(){if(seeding)return;seeding=true;FB.getDoc(cfgRef()).then(s=>{const d=s.exists()?s.data():{};if(Array.isArray(d.referrers)){S.referrers=d.referrers;S.refFavs=d.referrerFavs||[];fill();return}return FB.setDoc(cfgRef(),{referrers:sortAr(SEED)},{merge:true}).then(()=>{S.referrers=sortAr(SEED);fill()})}).catch(err=>{console.error('referrers seed',err);seeding=false})}
  function attach(){if(!cloud.db||!cloud.user)return;if(unsub&&forUid===cloud.user.uid&&cloud.unsubs.includes(unsub))return;forUid=cloud.user.uid;
-  unsub=FB.onSnapshot(cfgRef(),snap=>{const x=snap.data()||{};if(!Array.isArray(x.referrers)&&!snap.metadata.fromCache){FB.setDoc(cfgRef(),{referrers:sortAr(SEED)},{merge:true}).catch(()=>{});return}const r=Array.isArray(x.referrers)?x.referrers:[];if(stable(r)!==stable(S.referrers||[])){S.referrers=r;fill()}},()=>{});cloud.unsubs.push(unsub)}
- const baseSub=subscribe;subscribe=function(){const keep=S.referrers||[];const r=baseSub.apply(this,arguments);S.referrers=keep;unsub=null;attach();return r};
+  unsub=FB.onSnapshot(cfgRef(),snap=>{const x=snap.data()||{};S.refFavs=Array.isArray(x.referrerFavs)?x.referrerFavs:[];if(!Array.isArray(x.referrers)){seedOnce();return}const r=x.referrers;if(stable(r)!==stable(S.referrers||[])||stable(S.refFavs)!==favSeen){S.referrers=r;favSeen=stable(S.refFavs);fill()}},()=>{});cloud.unsubs.push(unsub)}
+ const baseSub=subscribe;subscribe=function(){const keep=S.referrers||[],kf=S.refFavs||[];const r=baseSub.apply(this,arguments);S.referrers=keep;S.refFavs=kf;unsub=null;attach();return r};
  setInterval(()=>{S.referrers=S.referrers||[];attach()},3000);
  const baseRender=render;render=function(){const r=baseRender.apply(this,arguments);try{tagRows();renderRefSettings()}catch(e){console.error(e)}return r};
  fill();attach();
