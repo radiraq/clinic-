@@ -215,7 +215,7 @@ setInterval(()=>{try{if(list().some(p=>p.status===OUT))scheduleRender()}catch{}}
 
 async function copyText(t){try{await navigator.clipboard.writeText(t);return true}catch{const ta=el('textarea');ta.value=t;ta.setAttribute('readonly','');ta.style.position='fixed';ta.style.opacity='0';document.body.append(ta);ta.select();let ok=false;try{ok=document.execCommand('copy')}catch{}ta.remove();return ok}}
 function cpBtn(label,value,cls,p){const b=el('button',undefined,'cp'+(cls?' '+cls:''));b.type='button';b.append(el('span',label),el('small','⧉'));b.title='اضغط للنسخ';b.onclick=async e=>{e.stopPropagation();if(await copyText(value)){try{window.onCopied&&window.onCopied(p)}catch(e){}b.classList.add('ok');b.lastChild.textContent='✓';toast('تم النسخ: '+value);setTimeout(()=>{b.classList.remove('ok');b.lastChild.textContent='⧉'},1500)}else toast('تعذر النسخ؛ حدّد النص وانسخه يدويًا')};return b}
-var BUILD='20261118193721';
+var BUILD='20261118202620';
 
 // ===== Cloud version 0.3 (Firebase) — identical in both screens =====
 var CLINIC_ID='karma',DOCTOR_EMAIL='doctor@fallujah.clinic',EMAIL_DOMAIN='fallujah.clinic';
@@ -734,19 +734,21 @@ body:not(.dark) .ref-tag{color:#1d4f7a;background:#dbeafe}
  check();setInterval(check,10*60000);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')check()});
 })();
 </script>
-<style id="v13now">#nowCard .nc-x{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:8px;font-size:14px;font-weight:700}#nowCard .nc-x span{white-space:nowrap}#nowCard .nc-ref{color:#9fd3ff}#nowCard .nc-reg{color:var(--muted)}#nowCard .nc-ago{color:#7bdbc2}#nowCard .nc-ago[data-lvl='1']{color:#f5c26b}#nowCard .nc-ago[data-lvl='2']{color:#ff8a8a}#nowCard .nc-in-t{color:#7bdbc2}</style>
+<style id="v13now">#nowCard .nc-d .nc-ref{color:#9fd3ff;font-weight:700}#nowCard .nc-d .nc-w{color:#7bdbc2;font-weight:700;white-space:nowrap}#nowCard .nc-d .nc-w[data-lvl='1']{color:#f5c26b}#nowCard .nc-d .nc-w[data-lvl='2']{color:#ff8a8a}</style>
 <script id="v13js">
 (function(){
- function regAt(p){if(p.regAt)return p.regAt;const l=(S.ledger||[]).find(x=>x._id==='pay-'+p.id);if(l&&l.at)return l.at;return ''}
- function dur(at){const m=Math.max(0,Math.floor((Date.now()-new Date(at))/60000)),h=Math.floor(m/60),r=m%60;return{t:m<1?'هسه':m<60?m+' د':h+' س'+(r?' و'+r+' د':''),lvl:m>=60?'2':m>=30?'1':'0'}}
- function extra(box,p,inside){if(!box)return;let x=box.querySelector('.nc-x');if(!p){if(x)x.remove();return}
-  const parts=[];if(p.referrer)parts.push(['nc-ref','↩ '+p.referrer]);const at=regAt(p);if(at){parts.push(['nc-reg','🕒 سجّل '+time(at)]);const d=dur(at);parts.push(['nc-ago','⏳ صار له '+d.t,d.lvl])}
-  if(inside&&p.enteredAt)parts.push(['nc-in-t','🩺 داخل من '+dur(p.enteredAt).t]);
-  const key=JSON.stringify(parts);if(x&&x.dataset.k===key)return;if(!x){x=el('div',undefined,'nc-x');box.append(x)}x.dataset.k=key;x.replaceChildren();
-  parts.forEach(([c,t,l])=>{const s=el('span',t,c);if(l)s.dataset.lvl=l;x.append(s)})}
+ // Detail line of the now/next cards: exam • age • referrer • waiting time.
+ function regAt(p){if(p.regAt)return p.regAt;const l=(S.ledger||[]).find(x=>x._id==='pay-'+p.id);return l&&l.at||''}
+ function mins(a,b){return Math.max(0,Math.floor((new Date(b)-new Date(a))/60000))}
+ function fmt(m){const h=Math.floor(m/60),r=m%60;return m<1?'هسه':m<60?m+' د':h+' س'+(r?' و'+r+' د':'')}
+ function line(box,p,inside){if(!box||!p)return;const d=box.querySelector('.nc-d');if(!d)return;
+  const at=regAt(p),parts=[[null,p.exam],[null,ageShow(p)?'العمر '+ageShow(p):'']];if(p.referrer)parts.push(['nc-ref','↩ '+p.referrer]);
+  if(at){const m=inside&&p.enteredAt?mins(at,p.enteredAt):mins(at,Date.now());parts.push(['nc-w',(inside&&p.enteredAt?'⏳ انتظر ':'⏳ ينتظر من ')+fmt(m),m>=60?'2':m>=30?'1':'0'])}
+  const key=JSON.stringify(parts);if(d.dataset.k===key)return;d.dataset.k=key;d.replaceChildren();
+  parts.filter(x=>x[1]).forEach(([c,t,l],i)=>{if(i)d.append(' • ');if(c){const s=el('span',t,c);if(l)s.dataset.lvl=l;d.append(s)}else d.append(t)})}
  function run(){const c=document.getElementById('nowCard');if(!c)return;const inside=list().find(p=>p.status==='داخل الفحص'||p.status===OUT);let next=null;try{next=nextPatient()}catch(e){}
-  extra(c.querySelector('.nc-in'),inside,true);extra(c.querySelector('.nc-next'),next,false)}
- const base=render;render=function(){const r=base.apply(this,arguments);try{run()}catch(e){console.error(e)}return r};setInterval(()=>{try{run()}catch(e){}},30000);try{run()}catch(e){}
+  line(c.querySelector('.nc-in'),inside,true);line(c.querySelector('.nc-next'),next,false)}
+ const base=render;render=function(){const r=base.apply(this,arguments);try{run()}catch(e){console.error(e)}return r};setInterval(()=>{try{run()}catch(e){}},5000);try{run()}catch(e){}
 })();
 </script>
 <style>
