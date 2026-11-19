@@ -215,7 +215,7 @@ setInterval(()=>{try{if(list().some(p=>p.status===OUT))scheduleRender()}catch{}}
 
 async function copyText(t){try{await navigator.clipboard.writeText(t);return true}catch{const ta=el('textarea');ta.value=t;ta.setAttribute('readonly','');ta.style.position='fixed';ta.style.opacity='0';document.body.append(ta);ta.select();let ok=false;try{ok=document.execCommand('copy')}catch{}ta.remove();return ok}}
 function cpBtn(label,value,cls,p){const b=el('button',undefined,'cp'+(cls?' '+cls:''));b.type='button';b.append(el('span',label),el('small','⧉'));b.title='اضغط للنسخ';b.onclick=async e=>{e.stopPropagation();if(await copyText(value)){try{window.onCopied&&window.onCopied(p)}catch(e){}b.classList.add('ok');b.lastChild.textContent='✓';toast('تم النسخ: '+value);setTimeout(()=>{b.classList.remove('ok');b.lastChild.textContent='⧉'},1500)}else toast('تعذر النسخ؛ حدّد النص وانسخه يدويًا')};return b}
-var BUILD='20261119193302';
+var BUILD='20261119195814';
 
 // ===== Cloud version 0.3 (Firebase) — identical in both screens =====
 var CLINIC_ID='fallujah',DOCTOR_EMAIL='doctor@fallujah.clinic',EMAIL_DOMAIN='fallujah.clinic';
@@ -518,7 +518,7 @@ document.querySelectorAll('#nav button[data-page]').forEach(b=>{const t=S[b.data
    const exam=ex1.value+(ex2.value&&ex2.value!==ex1.value?' + '+ex2.value:'');if(exam&&exam!==p.exam){ch.push('الفحص: '+p.exam+' ← '+exam);p.exam=exam}
    if(os.value!==(p.oldScan==='yes'?'yes':'no')){ch.push('سونار قديم: '+(os.value==='yes'?'نعم':'لا'));p.oldScan=os.value}if(pv.value!==(p.prevVisit||'no')){ch.push('المراجعة السابقة: '+(pvText(p)||'—')+' ← '+(pvText({prevVisit:pv.value})||'—'));p.prevVisit=pv.value}{const nv=sgw.value;if(JSON.stringify(nv)!==JSON.stringify((p.surgeries||[]).map(({result,tx,...x})=>x))){ch.push('العمليات السابقة: '+(nv.map(surgText).join(' • ')||'ماكو'));p.surgeries=nv}}{const rv=rf.value==='__new__'?'':rf.value;if(rv!==(p.referrer||'')){ch.push('المحوِّل: '+(p.referrer||'—')+' ← '+(rv||'—'));p.referrer=rv}}if(base!==p.base){ch.push('السعر: '+money(p.base)+' ← '+money(base));p.base=base;p.priceEdited=true}
    if(dsc!==(p.discount||0)||(dsc&&rsn!==(p.reason||''))){ch.push('الخصم: '+money(p.discount||0)+' ← '+money(dsc)+(rsn?' ('+rsn+')':''));p.discount=dsc;p.reason=rsn}
-   if(p.status!=='ملغي'){const net=Math.max(0,p.base-p.discount-(p.refunded||0)),diff=net-(p.paid||0);
+   if(p.status!=='ملغي'&&!(p.wa&&!p.paid)){const net=Math.max(0,p.base-p.discount-(p.refunded||0)),diff=net-(p.paid||0);
     if(diff){const at=stamp();S.ledger.push({id:uid(),at,clinic:clinic(),patientId:p.id,amount:diff,label:diff>0?'قبض فرق':'استرداد',reason:p.name+' — تعديل الفحص/السعر',by:roleName()});p.paid=net;ch.push(diff>0?'استلام فرق '+money(diff):'إرجاع '+money(-diff)+' للمريض')}}
    d.close();if(!ch.length)return toast('ما تغيّر شي');p.editedBy=roleName();p.editedAt=stamp();audit('تعديل '+p.name+' — '+ch.join(' • '));render();toast('✓ تم الحفظ')});
   ok.type='button';ok.className='primary';const no=btn('تراجع',()=>d.close());no.type='button';a.append(ok,no);d.append(a);d.oncancel=e=>{e.preventDefault();d.close()};d.showModal();nm.focus()};
@@ -950,11 +950,11 @@ body:not(.dark) #patientForm .f-ok{background:#eefaf3!important;border-color:#b9
  const BU=API+'screens-backup-q8m4t2';
  const TAG='🤖 تسجيل آلي';
  // Money for a WhatsApp booking is collected only when the patient arrives.
- const _ac=autoCollect;autoCollect=function(p){if(p&&p.wa&&!p.arrivedAt)return false;return _ac.apply(this,arguments)};
+ const _ac=autoCollect;autoCollect=function(p){if(p&&p.wa)return false;return _ac.apply(this,arguments)};
  // Arrival: into the waiting queue with a new turn number (arrival order) + collect.
  const _tr=transition;transition=function(p,status){const id=p&&p.id;refreshSharedState();const q=id&&list().find(x=>x.id===id);
-  if(q&&q.wa&&!q.arrivedAt&&q.status==='مؤجل'&&status==='بانتظار الدخول'){q.arrivedAt=stamp();q.no=Math.max(0,...list().filter(x=>x.id!==id).map(x=>x.no||0))+1;q.regAt=stamp();q.status='بانتظار الدخول';q.statusReason='';q.statusBy=roleName();q.statusAt=stamp();autoCollect(q);
-   audit('وصل '+q.name+' (حجز واتساب) — الدور '+q.no+(q.paid?' — قبض '+money(q.paid):''));render();toast('✓ وصل '+q.name+' • الدور '+q.no+(q.paid?' • انقبض '+money(q.paid):''));return}
+  if(q&&q.wa&&!q.arrivedAt&&q.status==='مؤجل'&&status==='بانتظار الدخول'){q.arrivedAt=stamp();q.no=Math.max(0,...list().filter(x=>x.id!==id).map(x=>x.no||0))+1;q.regAt=stamp();q.status='بانتظار الدخول';q.statusReason='';q.statusBy=roleName();q.statusAt=stamp();
+   audit('وصل '+q.name+' (حجز واتساب) — الدور '+q.no+' — غير مدفوع');render();toast('✓ وصل '+q.name+' • الدور '+q.no);if(window.__waCanCollect&&__waCanCollect())setTimeout(()=>window.__waAskCollect(q.id),250);return}
   return _tr.apply(this,arguments)};
  const ymd=d=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Baghdad',year:'numeric',month:'2-digit',day:'2-digit'}).format(d);
  function bookDay(b){const t=toAsciiDigits(String(b.time||''));const m=t.match(/20\d\d-\d\d-\d\d/);if(m)return m[0];const at=new Date(b.at||Date.now());if(/غد|غدا|باچر|باكر|بكرة|بكره/.test(t))return ymd(new Date(at.getTime()+864e5));return ymd(at)}
@@ -978,7 +978,7 @@ body:not(.dark) #patientForm .f-ok{background:#eefaf3!important;border-color:#b9
  // Show the tag and turn «للانتظار» into «✓ وصل» on booking rows.
  function tag(){document.querySelectorAll('[data-id^="wa-"]').forEach(row=>{const p=S.patients.find(x=>x.id===row.dataset.id);if(!p)return;
    if(!row.querySelector('.wa-tag')){const t=el('span',TAG,'wa-tag');t.title='انسجل تلقائيًا من حجز واتساب'+(p.waNotes&&p.waNotes!=='لا يوجد'?' • '+p.waNotes:'');const nm=row.querySelector('.cp,b,strong,td:nth-child(2)');(nm&&nm.parentNode?nm.parentNode:row).append(t)}
-   if(p.status==='مؤجل'&&!p.arrivedAt)row.querySelectorAll('button').forEach(b=>{if(/للانتظار|إعادة للانتظار|وصل/.test(b.textContent)){b.textContent='✓ وصل';b.title='المريض وصل — يدخل الانتظار وينقبض المبلغ';b.classList.add('b-arrive');b.style.cssText+=';background:#25a35a;color:#fff;border-color:#25a35a'}else if(/قبض/.test(b.textContent)&&!/استرجاع/.test(b.textContent))b.remove()})})}
+   if(p.status==='مؤجل'&&!p.arrivedAt)row.querySelectorAll('button').forEach(b=>{if(/للانتظار|إعادة للانتظار|وصل/.test(b.textContent)){b.textContent='✓ وصل';b.title='المريض وصل — يدخل الانتظار وينقبض المبلغ';b.classList.add('b-arrive');b.style.cssText+=';background:#25a35a;color:#fff;border-color:#25a35a'}else if(/قبض/.test(b.textContent)&&!/استرجاع/.test(b.textContent))b.remove()});row.querySelectorAll('button').forEach(b=>{if(/قبض/.test(b.textContent)&&!/استرجاع/.test(b.textContent)&&!b.classList.contains('wa-pay'))b.remove()});let un=row.querySelector('.wa-unpaid');const need=p.arrivedAt&&!p.paid&&!p.refunded&&p.status!=='ملغي'&&(p.base-(p.discount||0))>0;if(need&&!un){un=el('span','💵 غير مدفوع','wa-unpaid');row.querySelector('.wa-tag')?.after(un)}else if(!need&&un)un.remove();if(need&&window.__waCanCollect&&__waCanCollect()&&!row.querySelector('.wa-pay')){const pb=btn('💵 قبض '+money(p.base-(p.discount||0)),()=>window.__waAskCollect(p.id));pb.className='wa-pay';const anyBtn=row.querySelector('button');(anyBtn&&anyBtn.parentNode?anyBtn.parentNode:row).prepend(pb)}else if(!need)row.querySelector('.wa-pay')?.remove()})}
  const _r=render;render=function(){const r=_r.apply(this,arguments);try{tag()}catch(e){console.error(e)}return r};try{tag()}catch(e){}
  // Backup of the whole day to n8n (doctor + secretary screens).
  const backupRole=roleName()==='الطبيب'||role()==='secretary';let lastBody='';
@@ -987,6 +987,19 @@ body:not(.dark) #patientForm .f-ok{background:#eefaf3!important;border-color:#b9
   fetch(BU,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body,keepalive:body.length<60000}).then(r=>{if(!r.ok)lastBody=''}).catch(()=>{lastBody=''})}catch(e){console.warn('backup',e)}}
  setInterval(backup,10*60000);setTimeout(backup,30000);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')backup()});
  window.__pullBookings=pull;window.__backupNow=()=>{lastBody='';backup()};
+})();
+</script>
+<style id="v23css">.wa-unpaid{display:inline-block;margin-inline-start:6px;padding:1px 7px;border-radius:8px;background:#e5484d22;color:#ff6b6b;font-size:12px;font-weight:800;white-space:nowrap}.wa-pay{background:#e08a1e!important;color:#fff!important;border-color:#e08a1e!important;font-weight:800}</style>
+<script id="v23js">
+(function(){
+ // Who may take money for a WhatsApp booking: the secretary and the writer (not the doctor screen).
+ window.__waCanCollect=()=>roleName()==='السكرتارية'||roleName()==='الكاتبة'||role()==='secretary';
+ function collect(id){refreshSharedState();const q=list().find(x=>x.id===id);if(!q||!q.wa||q.paid||q.refunded||q.status==='ملغي')return;const amt=q.base-(q.discount||0);if(!(amt>0))return;
+  q.paid=amt;q.paidBy=roleName();q.paidAt=stamp();const lid='pay-'+q.id,old=S.ledger.find(l=>l._id===lid);
+  if(old){old.amount=amt;old.label='قبض';old.by=roleName();old.at=stamp()}else S.ledger.push({_id:lid,at:stamp(),clinic:clinic(),patientId:q.id,amount:amt,label:'قبض',reason:q.name,by:roleName()});
+  audit('قبض '+money(amt)+' — '+q.name+' (حجز واتساب)');render();toast('✓ انقبض '+money(amt)+' من '+q.name)}
+ window.__waAskCollect=async function(id){if(!__waCanCollect())return;const q=list().find(x=>x.id===id);if(!q||q.paid)return;const amt=q.base-(q.discount||0);
+  const ok=await askDialog('💵 قبضتي '+money(amt)+' من '+q.name+'؟ (إذا المبلغ غلط، اضغطي «تراجع» وعدّلي السعر من ✎ أول)',{ok:'✓ نعم قبضت'});if(ok)collect(id)};
 })();
 </script>
 </body></html>
