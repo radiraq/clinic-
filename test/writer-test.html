@@ -215,7 +215,7 @@ setInterval(()=>{try{if(list().some(p=>p.status===OUT))scheduleRender()}catch{}}
 
 async function copyText(t){try{await navigator.clipboard.writeText(t);return true}catch{const ta=el('textarea');ta.value=t;ta.setAttribute('readonly','');ta.style.position='fixed';ta.style.opacity='0';document.body.append(ta);ta.select();let ok=false;try{ok=document.execCommand('copy')}catch{}ta.remove();return ok}}
 function cpBtn(label,value,cls,p){const b=el('button',undefined,'cp'+(cls?' '+cls:''));b.type='button';b.append(el('span',label),el('small','⧉'));b.title='اضغط للنسخ';b.onclick=async e=>{e.stopPropagation();if(await copyText(value)){try{window.onCopied&&window.onCopied(p)}catch(e){}b.classList.add('ok');b.lastChild.textContent='✓';toast('تم النسخ: '+value);setTimeout(()=>{b.classList.remove('ok');b.lastChild.textContent='⧉'},1500)}else toast('تعذر النسخ؛ حدّد النص وانسخه يدويًا')};return b}
-var BUILD='20261119093011';
+var BUILD='20261119094118';
 
 // ===== Cloud version 0.3 (Firebase) — identical in both screens =====
 var CLINIC_ID='fallujah',DOCTOR_EMAIL='doctor@fallujah.clinic',EMAIL_DOMAIN='fallujah.clinic';
@@ -516,7 +516,7 @@ document.querySelectorAll('#nav button[data-page]').forEach(b=>{const t=S[b.data
    if((phone||'')!==(p.phone||'')){ch.push('الهاتف: '+(p.phone||'—')+' ← '+(phone||'—'));p.phone=phone}
    if(nums.some(n=>n!==null)){const [y,m,dd]=nums;const yrs=(y||0)+(m||0)/12+(dd||0)/365;if(yrs>120){err.textContent='العمر غير صحيح.';return}const pr=[];if(y)pr.push(arCount(y,'سنة','سنوات'));if(m)pr.push(arCount(m,'شهر','أشهر'));if(dd)pr.push(arCount(dd,'يوم','أيام'));const lab=pr.length?pr.join(' و'):'حديث الولادة';if(lab!==p.ageLabel){ch.push('العمر: '+(ageShow(p)||'—')+' ← '+lab);p.age=Math.round(yrs*1000)/1000;p.ageLabel=lab}}
    const exam=ex1.value+(ex2.value&&ex2.value!==ex1.value?' + '+ex2.value:'');if(exam&&exam!==p.exam){ch.push('الفحص: '+p.exam+' ← '+exam);p.exam=exam}
-   if((pv.value||'')!==(p.prevVisit||'')){ch.push('المراجعة السابقة: '+(pvText(p)||'—')+' ← '+(pvText({prevVisit:pv.value})||'—'));p.prevVisit=pv.value}{const nv=sgw.value;if(JSON.stringify(nv)!==JSON.stringify(p.surgeries||[])){ch.push('العمليات السابقة: '+(nv.map(surgText).join(' • ')||'ماكو'));p.surgeries=nv}}{const rv=rf.value==='__new__'?'':rf.value;if(rv!==(p.referrer||'')){ch.push('المحوِّل: '+(p.referrer||'—')+' ← '+(rv||'—'));p.referrer=rv}}if(base!==p.base){ch.push('السعر: '+money(p.base)+' ← '+money(base));p.base=base;p.priceEdited=true}
+   if((pv.value||'')!==(p.prevVisit||'')){ch.push('المراجعة السابقة: '+(pvText(p)||'—')+' ← '+(pvText({prevVisit:pv.value})||'—'));p.prevVisit=pv.value}{const nv=sgw.value;if(JSON.stringify(nv)!==JSON.stringify((p.surgeries||[]).map(({result,tx,...x})=>x))){ch.push('العمليات السابقة: '+(nv.map(surgText).join(' • ')||'ماكو'));p.surgeries=nv}}{const rv=rf.value==='__new__'?'':rf.value;if(rv!==(p.referrer||'')){ch.push('المحوِّل: '+(p.referrer||'—')+' ← '+(rv||'—'));p.referrer=rv}}if(base!==p.base){ch.push('السعر: '+money(p.base)+' ← '+money(base));p.base=base;p.priceEdited=true}
    if(dsc!==(p.discount||0)||(dsc&&rsn!==(p.reason||''))){ch.push('الخصم: '+money(p.discount||0)+' ← '+money(dsc)+(rsn?' ('+rsn+')':''));p.discount=dsc;p.reason=rsn}
    if(p.status!=='ملغي'){const net=Math.max(0,p.base-p.discount-(p.refunded||0)),diff=net-(p.paid||0);
     if(diff){const at=stamp();S.ledger.push({id:uid(),at,clinic:clinic(),patientId:p.id,amount:diff,label:diff>0?'قبض فرق':'استرداد',reason:p.name+' — تعديل الفحص/السعر',by:roleName()});p.paid=net;ch.push(diff>0?'استلام فرق '+money(diff):'إرجاع '+money(-diff)+' للمريض')}}
@@ -759,6 +759,7 @@ body:not(.dark) .ref-tag{color:#1d4f7a;background:#dbeafe}
 .hx-pv{color:#fde9c8;background:#5a3a12}.hx-sg{color:#fbdde4;background:#5b2230;white-space:normal}
 body:not(.dark) .hx-pv{color:#7a4a0c;background:#fde9c8}body:not(.dark) .hx-sg{color:#7a1f33;background:#fbdde4}
 #nowCard .nc-h{display:block;margin-top:6px;font-size:14px;font-weight:700;line-height:1.6}#nowCard .nc-h .hx-tag{font-size:13px;margin:2px 0 0 6px}
+#pendBar{display:flex;flex-direction:column;gap:6px;margin:0 0 12px}#pendBar .pend-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;background:#5a3a12;color:#fde9c8;border:1px solid #8a5a1c;border-radius:12px;padding:9px 12px;font-weight:700}#pendBar .pend-t{flex:1 1 220px}#pendBar button{padding:7px 12px;font-size:13px}body:not(.dark) #pendBar .pend-row{background:#fde9c8;color:#5a3a12}@media(max-width:760px){main>#pendBar{order:1}}
 .v15dlg label{display:block;margin:8px 0 3px;font-size:13px;color:var(--muted)}.v15dlg select,.v15dlg input{width:100%}.v15dlg .tx{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:4px}.v15dlg .tx label{display:inline-flex;align-items:center;gap:5px;margin:0;color:var(--ink);font-size:14px}.v15dlg .tx input{width:auto}
 </style>
 <script id="v15js">
@@ -777,8 +778,15 @@ body:not(.dark) .hx-pv{color:#7a4a0c;background:#fde9c8}body:not(.dark) .hx-sg{c
    if(!name){err.textContent='اكتبي اسم الفحص.';return}if(examCatalog.some(x=>normText(x.name)===normText(name))){err.textContent='الفحص موجود بالقائمة.';return}
    if(![p,c].every(n=>Number.isInteger(n)&&n>=5000&&n<=2000000&&n%5000===0)){err.textContent='السعر بالألف ومن مضاعفات 5 (مثل 15، 20، 25).';return}
    examCatalog=examCatalog.concat({name,child:c,adult:p});try{localStorage.setItem(CATALOG_KEY,JSON.stringify(examCatalog))}catch{}pushCatalog();refreshExamOptions();if(typeof renderCatalog==='function')try{renderCatalog()}catch(e){}
-   audit('إضافة فحص جديد — '+name+' ('+money(p)+(c!==p?'، الأطفال '+money(c):'')+')');toast('✓ انضاف «'+name+'»');d.close();res(name)});ok.type='button';ok.className='primary';
+   audit('إضافة فحص جديد — '+name+' ('+money(p)+(c!==p?'، الأطفال '+money(c):'')+')');if(roleName()!=='الطبيب')markPending({name,adult:p,child:c,by:roleName(),at:stamp()});toast('✓ انضاف «'+name+'»');d.close();res(name)});ok.type='button';ok.className='primary';
   const no=btn('تراجع',()=>{d.close();res('')});no.type='button';a.append(ok,no);d.append(a);d.onclose=()=>res('');d.showModal();nm.focus()})}
+ async function markPending(x){try{const s=await FB.getDoc(CFG());const cur=(s.exists()&&Array.isArray(s.data().pendingExams))?s.data().pendingExams:[];await FB.setDoc(CFG(),{pendingExams:cur.filter(y=>y.name!==x.name).concat(x)},{merge:true})}catch(e){console.error(e)}}
+ async function clearPending(name){try{const s=await FB.getDoc(CFG());const cur=(s.exists()&&Array.isArray(s.data().pendingExams))?s.data().pendingExams:[];await FB.setDoc(CFG(),{pendingExams:cur.filter(y=>y.name!==name)},{merge:true});S.pendingExams=(S.pendingExams||[]).filter(y=>y.name!==name);drawPending()}catch(e){toast('تعذر الحفظ: '+(e.code||e.message))}}
+ function drawPending(){if(roleName()!=='الطبيب')return;let bar=$('pendBar');const L=(S.pendingExams||[]).filter(x=>examCatalog.some(e=>e.name===x.name));if(!L.length){if(bar)bar.remove();return}
+  if(!bar){bar=el('div');bar.id='pendBar';const m=document.querySelector('main');const h=m&&m.querySelector('header');(h||m).after?((h||m).after(bar)):m.prepend(bar)}bar.replaceChildren();
+  L.forEach(x=>{const cur=examCatalog.find(e=>e.name===x.name)||x,r=el('div',undefined,'pend-row');r.append(el('span','🆕 فحص جديد أضافته '+(x.by||'')+': «'+x.name+'» بسعر '+money(cur.adult)+(cur.child!==cur.adult?' (الأطفال '+money(cur.child)+')':''),'pend-t'));
+   const ok=btn('✓ تأكيد السعر',()=>{audit('تأكيد سعر فحص — '+x.name);clearPending(x.name);toast('✓ تأكد السعر')});ok.className='primary';
+   const ed=btn('✎ تعديل السعر',()=>{document.querySelector('#nav button[data-page=settings]').click();setTimeout(()=>{const t=[...document.querySelectorAll('#catalogRows input')].find(i=>i.value===x.name);if(t){t.scrollIntoView({block:'center'});t.focus()}},300)});r.append(ok,ed);bar.append(r)})}
  const baseRefresh=refreshExamOptions;refreshExamOptions=function(){const r=baseRefresh.apply(this,arguments);['exam','exam2'].forEach(id=>{const s=$(id);if(!s||[...s.options].some(o=>o.value===NEWX))return;const o=el('option','＋ فحص جديد…');o.value=NEWX;s.append(o)});return r};
  ['exam','exam2'].forEach(id=>{const s=$(id);if(!s)return;let prev=s.value;s.addEventListener('focus',()=>{if(s.value!==NEWX)prev=s.value});
   s.addEventListener('change',async e=>{if(s.value!==NEWX){prev=s.value;return}e.stopImmediatePropagation();s.value=prev;const n=await addExam();if(n){s.value=n;prev=n}s.dispatchEvent(new Event('change'))},true)});
@@ -795,22 +803,20 @@ body:not(.dark) .hx-pv{color:#7a4a0c;background:#fde9c8}body:not(.dark) .hx-sg{c
  const RESULTS=['حميد','خبيث','ما معروف'],TX=['يود مشع','علاج إشعاعي','علاج كيمياوي'],SIDES=['يمين','يسار','الجهتين'];
  function opsOf(area){return (AREAS[area]||[]).concat(((S.surgCustom||{})[area])||[]).filter((x,i,a)=>a.indexOf(x)===i)}
  async function addCustomOp(area,op){try{const snap=await FB.getDoc(CFG());const cur=(snap.exists()&&snap.data().surgeriesCustom)||{};const l=cur[area]||[];if(!l.includes(op)&&!(AREAS[area]||[]).includes(op)){cur[area]=l.concat(op);await FB.setDoc(CFG(),{surgeriesCustom:cur},{merge:true});S.surgCustom=cur;audit('إضافة عملية للقائمة — '+area+': '+op)}}catch(err){console.error(err)}}
- window.surgText=function(x){return [x.op+(x.side?' ('+x.side+')':''),x.result&&x.result!=='ما معروف'?x.result:x.result?'النتيجة ما معروفة':'',(x.tx||[]).join(' + '),x.year?'سنة '+x.year:'',x.note||''].filter(Boolean).join(' — ')};
+ window.surgText=function(x){return [x.op+(x.side?' ('+x.side+')':''),x.year?'سنة '+x.year:'',x.note||''].filter(Boolean).join(' — ')};
  function surgDialog(init){return new Promise(res=>{const d=dlg('🩹 عملية سابقة');const lab=t=>{const l=el('label',t);d.append(l);return l};const opt=(s,v,t)=>{const o=el('option',t??v);o.value=v;s.append(o)};
   lab('المنطقة');const ar=el('select');Object.keys(AREAS).forEach(a=>opt(ar,a));d.append(ar);
   lab('العملية');const op=el('select');d.append(op);const other=el('input');other.placeholder='اكتبي اسم العملية';other.maxLength=80;other.style.marginTop='6px';d.append(other);
   const fillOps=v=>{op.replaceChildren();opsOf(ar.value).forEach(o=>opt(op,o));opt(op,'__other__','＋ عملية ثانية (أكتبها)…');op.value=v&&opsOf(ar.value).includes(v)?v:(opsOf(ar.value)[0]||'__other__');other.style.display=op.value==='__other__'?'':'none'};
   ar.onchange=()=>fillOps('');op.onchange=()=>{other.style.display=op.value==='__other__'?'':'none';if(op.value==='__other__')other.focus()};
   lab('الجهة (إذا تنطبق)');const sd=el('select');opt(sd,'','—');SIDES.forEach(x=>opt(sd,x));d.append(sd);
-  lab('نتيجة الخزعة / الفحص النسيجي');const rs=el('select');opt(rs,'','— ما مسوية أو ما تنطبق');RESULTS.forEach(x=>opt(rs,x));d.append(rs);
-  lab('علاج بعد العملية');const tx=el('div',undefined,'tx');const boxes=TX.map(t=>{const l=el('label'),c=el('input');c.type='checkbox';c.value=t;l.append(c,' '+t);tx.append(l);return c});d.append(tx);
   lab('سنة العملية (اختياري)');const yr=el('input');yr.inputMode='numeric';yr.dir='ltr';yr.style.textAlign='right';yr.placeholder='مثال: 2021';yr.maxLength=4;d.append(yr);
   lab('ملاحظة (اختياري)');const nt=el('input');nt.maxLength=120;d.append(nt);
-  if(init){ar.value=init.area in AREAS?init.area:'أخرى';fillOps(init.op);if(!opsOf(ar.value).includes(init.op)){op.value='__other__';other.style.display='';other.value=init.op}sd.value=init.side||'';rs.value=init.result||'';boxes.forEach(b=>b.checked=(init.tx||[]).includes(b.value));yr.value=init.year||'';nt.value=init.note||''}else fillOps('');
+  if(init){ar.value=init.area in AREAS?init.area:'أخرى';fillOps(init.op);if(!opsOf(ar.value).includes(init.op)){op.value='__other__';other.style.display='';other.value=init.op}sd.value=init.side||'';yr.value=init.year||'';nt.value=init.note||''}else fillOps('');
   const err=el('p','');err.style.color='#ff9a9a';d.append(err);const a=el('div',undefined,'actions');
   const ok=btn('✓ حفظ',()=>{const name=op.value==='__other__'?other.value.replace(/\s+/g,' ').trim():op.value;if(!name){err.textContent='اختاري أو اكتبي العملية.';return}
    const y=toAsciiDigits(yr.value).trim();if(y&&!/^(19|20)\d\d$/.test(y)){err.textContent='السنة مثل 2021.';return}
-   const x={area:ar.value,op:name,side:sd.value,result:rs.value,tx:boxes.filter(b=>b.checked).map(b=>b.value),year:y,note:nt.value.trim()};
+   const x={area:ar.value,op:name,side:sd.value,year:y,note:nt.value.trim()};
    if(op.value==='__other__')addCustomOp(ar.value,name);d.close();res(x)});ok.type='button';ok.className='primary';
   const no=btn('تراجع',()=>{d.close();res(null)});no.type='button';a.append(ok,no);d.append(a);d.onclose=()=>res(null);d.showModal()})}
  // An editable block: chips + «＋ إضافة عملية». block.value is the list.
@@ -843,7 +849,7 @@ body:not(.dark) .hx-pv{color:#7a4a0c;background:#fde9c8}body:not(.dark) .hx-sg{c
   const c=$('nowCard');if(c){const inside=list().find(p=>p.status==='داخل الفحص'||(typeof OUT!=='undefined'&&p.status===OUT));let next=null;try{next=nextPatient()}catch(e){}
    [[c.querySelector('.nc-in'),inside],[c.querySelector('.nc-next'),next]].forEach(([b,p])=>{if(b)put(b,p,'nc-h')})}}
  // ---------- Live custom-operation list ----------
- let un=null;function attach(){if(!cloud.db||!cloud.user||(un&&cloud.unsubs.includes(un)))return;un=FB.onSnapshot(CFG(),s=>{const x=s.data()||{};S.surgCustom=x.surgeriesCustom||{}},()=>{});cloud.unsubs.push(un)}
+ let un=null;function attach(){if(!cloud.db||!cloud.user||(un&&cloud.unsubs.includes(un)))return;un=FB.onSnapshot(CFG(),s=>{const x=s.data()||{};S.surgCustom=x.surgeriesCustom||{};S.pendingExams=x.pendingExams||[];drawPending()},()=>{});cloud.unsubs.push(un)}
  setInterval(attach,3000);attach();
  const base=render;render=function(){const r=base.apply(this,arguments);try{run()}catch(e){console.error(e)}return r};setInterval(()=>{try{run()}catch(e){}},5000);try{run()}catch(e){}
 })();
