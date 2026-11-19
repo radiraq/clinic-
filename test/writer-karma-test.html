@@ -215,7 +215,7 @@ setInterval(()=>{try{if(list().some(p=>p.status===OUT))scheduleRender()}catch{}}
 
 async function copyText(t){try{await navigator.clipboard.writeText(t);return true}catch{const ta=el('textarea');ta.value=t;ta.setAttribute('readonly','');ta.style.position='fixed';ta.style.opacity='0';document.body.append(ta);ta.select();let ok=false;try{ok=document.execCommand('copy')}catch{}ta.remove();return ok}}
 function cpBtn(label,value,cls,p){const b=el('button',undefined,'cp'+(cls?' '+cls:''));b.type='button';b.append(el('span',label),el('small','⧉'));b.title='اضغط للنسخ';b.onclick=async e=>{e.stopPropagation();if(await copyText(value)){try{window.onCopied&&window.onCopied(p)}catch(e){}b.classList.add('ok');b.lastChild.textContent='✓';toast('تم النسخ: '+value);setTimeout(()=>{b.classList.remove('ok');b.lastChild.textContent='⧉'},1500)}else toast('تعذر النسخ؛ حدّد النص وانسخه يدويًا')};return b}
-var BUILD='20261119095919';
+var BUILD='20261119100120';
 
 // ===== Cloud version 0.3 (Firebase) — identical in both screens =====
 var CLINIC_ID='karma',DOCTOR_EMAIL='doctor@fallujah.clinic',EMAIL_DOMAIN='fallujah.clinic';
@@ -868,6 +868,21 @@ body:not(.dark) .hx-pv{color:#7a4a0c;background:#fde9c8}body:not(.dark) .hx-sg{c
  const order=[lab('name'),lab('age'),lab('exam'),exam2,lab('pricePreset'),disc,lab('phone'),lab('referrer'),lab('prevVisit'),lab('oldScan'),sg].filter(Boolean);
  ['age','exam','pricePreset'].forEach(id=>{const l=lab(id);if(l)l.classList.add('full')});
  order.forEach(n=>g.append(n));
+})();
+</script>
+<style id="v19css">
+#patientForm .f-empty{background:rgba(220,70,70,.10)!important;border-color:rgba(230,100,100,.45)!important}
+#patientForm .f-ok{background:rgba(40,170,110,.10)!important;border-color:rgba(70,185,130,.45)!important}
+body:not(.dark) #patientForm .f-empty{background:#fdf0f0!important;border-color:#efc4c4!important}
+body:not(.dark) #patientForm .f-ok{background:#eefaf3!important;border-color:#b9e2cb!important}
+</style>
+<script id="v19js">
+(function(){
+ // Faint red when empty, faint green when filled: name, age, exam, price, phone.
+ const groups=[['name'],['age','ageMonths','ageDays'],['exam'],['pricePreset'],['phone']];
+ function paint(){groups.forEach(ids=>{const els=ids.map(id=>$(id)).filter(Boolean);if(!els.length)return;const ok=els.some(e=>String(e.value||'').trim()!==''&&e.value!=='__newexam__');els.forEach(e=>{e.classList.toggle('f-ok',ok);e.classList.toggle('f-empty',!ok)})})}
+ const f=$('patientForm');if(!f)return;f.addEventListener('input',paint);f.addEventListener('change',paint);f.addEventListener('reset',()=>setTimeout(paint,0));
+ const base=render;render=function(){const r=base.apply(this,arguments);try{paint()}catch(e){}return r};paint();
 })();
 </script>
 <style>
