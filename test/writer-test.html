@@ -215,7 +215,7 @@ setInterval(()=>{try{if(list().some(p=>p.status===OUT))scheduleRender()}catch{}}
 
 async function copyText(t){try{await navigator.clipboard.writeText(t);return true}catch{const ta=el('textarea');ta.value=t;ta.setAttribute('readonly','');ta.style.position='fixed';ta.style.opacity='0';document.body.append(ta);ta.select();let ok=false;try{ok=document.execCommand('copy')}catch{}ta.remove();return ok}}
 function cpBtn(label,value,cls,p){const b=el('button',undefined,'cp'+(cls?' '+cls:''));b.type='button';b.append(el('span',label),el('small','⧉'));b.title='اضغط للنسخ';b.onclick=async e=>{e.stopPropagation();if(await copyText(value)){try{window.onCopied&&window.onCopied(p)}catch(e){}b.classList.add('ok');b.lastChild.textContent='✓';toast('تم النسخ: '+value);setTimeout(()=>{b.classList.remove('ok');b.lastChild.textContent='⧉'},1500)}else toast('تعذر النسخ؛ حدّد النص وانسخه يدويًا')};return b}
-var BUILD='20261119094118';
+var BUILD='20261119094556';
 
 // ===== Cloud version 0.3 (Firebase) — identical in both screens =====
 var CLINIC_ID='fallujah',DOCTOR_EMAIL='doctor@fallujah.clinic',EMAIL_DOMAIN='fallujah.clinic';
@@ -496,7 +496,7 @@ document.querySelectorAll('#nav button[data-page]').forEach(b=>{const t=S[b.data
   const parts=String(p0.exam||'').split(' + ');
   const sel=(val,none)=>{const s=el('select');if(none){const o=el('option','— بدون فحص ثاني');o.value='';s.append(o)}const names=examCatalog.map(x=>x.name);if(val&&!names.includes(val))names.unshift(val);names.forEach(n=>{const o=el('option',n);o.value=n;s.append(o)});s.value=val||'';return s};
   const ex1=field('🩺 الفحص',sel(parts[0])),ex2=field('＋ فحص ثاني (اختياري)',sel(parts[1]||'',true));
-  const rf=field('👨‍⚕️ الطبيب المحوِّل',refSelect(p0.referrer||'')),pv=field('🔁 مراجعة سابقة',pvSelect(p0.prevVisit||'')),sgw=(d.append(surgBlock(p0.surgeries||[])),d.lastChild),price=field('💵 السعر (ألف)',inp(K(p0.base),'',1)),disc=field('➖ الخصم (ألف)',inp(K(p0.discount||0),'0',1)),why=field('سبب الخصم',inp(p0.reason||''));
+  const rf=field('👨‍⚕️ الطبيب المحوِّل',refSelect(p0.referrer||'')),pv=field('🔁 مراجعة سابقة',pvSelect(p0.prevVisit||'')),os=field('📄 عنده سونار قديم لنفس الفحص؟',osSelect(p0.oldScan||'')),sgw=(d.append(surgBlock(p0.surgeries||[])),d.lastChild),price=field('💵 السعر (ألف)',inp(K(p0.base),'',1)),disc=field('➖ الخصم (ألف)',inp(K(p0.discount||0),'0',1)),why=field('سبب الخصم',inp(p0.reason||''));
   const info=el('p','','muted');info.style.fontSize='13px';d.append(info);
   const ageNow=()=>{const v=[ay,am,ad].map(i=>{const t=toAsciiDigits(i.value).trim();return t===''?null:Number(t)});if(v.every(x=>x===null))return p0.age;return (v[0]||0)+(v[1]||0)/12+(v[2]||0)/365};
   const autoPrice=()=>{const a=ageNow();price.value=K(priceOf(ex1.value,a)+(ex2.value&&ex2.value!==ex1.value?priceOf(ex2.value,a):0));showInfo()};
@@ -516,7 +516,7 @@ document.querySelectorAll('#nav button[data-page]').forEach(b=>{const t=S[b.data
    if((phone||'')!==(p.phone||'')){ch.push('الهاتف: '+(p.phone||'—')+' ← '+(phone||'—'));p.phone=phone}
    if(nums.some(n=>n!==null)){const [y,m,dd]=nums;const yrs=(y||0)+(m||0)/12+(dd||0)/365;if(yrs>120){err.textContent='العمر غير صحيح.';return}const pr=[];if(y)pr.push(arCount(y,'سنة','سنوات'));if(m)pr.push(arCount(m,'شهر','أشهر'));if(dd)pr.push(arCount(dd,'يوم','أيام'));const lab=pr.length?pr.join(' و'):'حديث الولادة';if(lab!==p.ageLabel){ch.push('العمر: '+(ageShow(p)||'—')+' ← '+lab);p.age=Math.round(yrs*1000)/1000;p.ageLabel=lab}}
    const exam=ex1.value+(ex2.value&&ex2.value!==ex1.value?' + '+ex2.value:'');if(exam&&exam!==p.exam){ch.push('الفحص: '+p.exam+' ← '+exam);p.exam=exam}
-   if((pv.value||'')!==(p.prevVisit||'')){ch.push('المراجعة السابقة: '+(pvText(p)||'—')+' ← '+(pvText({prevVisit:pv.value})||'—'));p.prevVisit=pv.value}{const nv=sgw.value;if(JSON.stringify(nv)!==JSON.stringify((p.surgeries||[]).map(({result,tx,...x})=>x))){ch.push('العمليات السابقة: '+(nv.map(surgText).join(' • ')||'ماكو'));p.surgeries=nv}}{const rv=rf.value==='__new__'?'':rf.value;if(rv!==(p.referrer||'')){ch.push('المحوِّل: '+(p.referrer||'—')+' ← '+(rv||'—'));p.referrer=rv}}if(base!==p.base){ch.push('السعر: '+money(p.base)+' ← '+money(base));p.base=base;p.priceEdited=true}
+   if(os.value!==(p.oldScan==='yes'?'yes':'no')){ch.push('سونار قديم: '+(os.value==='yes'?'نعم':'لا'));p.oldScan=os.value}if(pv.value!==(p.prevVisit||'no')){ch.push('المراجعة السابقة: '+(pvText(p)||'—')+' ← '+(pvText({prevVisit:pv.value})||'—'));p.prevVisit=pv.value}{const nv=sgw.value;if(JSON.stringify(nv)!==JSON.stringify((p.surgeries||[]).map(({result,tx,...x})=>x))){ch.push('العمليات السابقة: '+(nv.map(surgText).join(' • ')||'ماكو'));p.surgeries=nv}}{const rv=rf.value==='__new__'?'':rf.value;if(rv!==(p.referrer||'')){ch.push('المحوِّل: '+(p.referrer||'—')+' ← '+(rv||'—'));p.referrer=rv}}if(base!==p.base){ch.push('السعر: '+money(p.base)+' ← '+money(base));p.base=base;p.priceEdited=true}
    if(dsc!==(p.discount||0)||(dsc&&rsn!==(p.reason||''))){ch.push('الخصم: '+money(p.discount||0)+' ← '+money(dsc)+(rsn?' ('+rsn+')':''));p.discount=dsc;p.reason=rsn}
    if(p.status!=='ملغي'){const net=Math.max(0,p.base-p.discount-(p.refunded||0)),diff=net-(p.paid||0);
     if(diff){const at=stamp();S.ledger.push({id:uid(),at,clinic:clinic(),patientId:p.id,amount:diff,label:diff>0?'قبض فرق':'استرداد',reason:p.name+' — تعديل الفحص/السعر',by:roleName()});p.paid=net;ch.push(diff>0?'استلام فرق '+money(diff):'إرجاع '+money(-diff)+' للمريض')}}
@@ -756,7 +756,7 @@ body:not(.dark) .ref-tag{color:#1d4f7a;background:#dbeafe}
 .sg-chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--bg);border-radius:9px;padding:5px 9px;font-size:13px;line-height:1.5}
 .sg-chip button{padding:1px 7px;font-size:12px}.sg-add{align-self:flex-start;padding:7px 12px;font-size:13px}
 .hx-tag{display:inline-block;font-size:12px;font-weight:600;border-radius:7px;padding:1px 7px;margin-inline-start:6px;margin-top:3px}
-.hx-pv{color:#fde9c8;background:#5a3a12}.hx-sg{color:#fbdde4;background:#5b2230;white-space:normal}
+.hx-pv{color:#fde9c8;background:#5a3a12}.hx-os{color:#dbeafe;background:#1d3f5f}body:not(.dark) .hx-os{color:#1d3f5f;background:#dbeafe}.hx-sg{color:#fbdde4;background:#5b2230;white-space:normal}
 body:not(.dark) .hx-pv{color:#7a4a0c;background:#fde9c8}body:not(.dark) .hx-sg{color:#7a1f33;background:#fbdde4}
 #nowCard .nc-h{display:block;margin-top:6px;font-size:14px;font-weight:700;line-height:1.6}#nowCard .nc-h .hx-tag{font-size:13px;margin:2px 0 0 6px}
 #pendBar{display:flex;flex-direction:column;gap:6px;margin:0 0 12px}#pendBar .pend-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;background:#5a3a12;color:#fde9c8;border:1px solid #8a5a1c;border-radius:12px;padding:9px 12px;font-weight:700}#pendBar .pend-t{flex:1 1 220px}#pendBar button{padding:7px 12px;font-size:13px}body:not(.dark) #pendBar .pend-row{background:#fde9c8;color:#5a3a12}@media(max-width:760px){main>#pendBar{order:1}}
@@ -825,25 +825,27 @@ body:not(.dark) .hx-pv{color:#7a4a0c;background:#fde9c8}body:not(.dark) .hx-sg{c
   const add=btn('＋ إضافة عملية',async()=>{const r=await surgDialog(null);if(r){L.push(r);draw()}});add.type='button';add.className='sg-add';wrap.append(add);
   Object.defineProperty(wrap,'value',{get:()=>L.map(x=>({...x})),set:v=>{L=(v||[]).map(x=>({...x}));draw()}});draw();return wrap};
  // ---------- 3) Previous visit ----------
- const PV={'':'— ما معروف',no:'لا — أول مرة',same:'نعم — لنفس الفحص',other:'نعم — لفحص آخر'};
- window.pvSelect=function(v){const s=el('select');Object.entries(PV).forEach(([k,t])=>{const o=el('option',t);o.value=k;s.append(o)});s.value=v||'';return s};
+ const PV={no:'لا — أول مرة',same:'نعم — لنفس الفحص',other:'نعم — لفحص آخر'};
+ window.pvSelect=function(v){const s=el('select');Object.entries(PV).forEach(([k,t])=>{const o=el('option',t);o.value=k;s.append(o)});s.value=v||'no';return s};
+ window.osSelect=function(v){const s=el('select');[['no','لا'],['yes','نعم']].forEach(([k,t])=>{const o=el('option',t);o.value=k;s.append(o)});s.value=v==='yes'?'yes':'no';return s};
  window.pvText=function(p){return p.prevVisit==='same'?'🔁 راجع قبل لنفس الفحص':p.prevVisit==='other'?'🔁 راجع قبل لفحص آخر':''};
  // ---------- Registration form ----------
- let regSg=null,regPv=null,history=[];
+ let regSg=null,regPv=null,regOs=null,history=[];
  (function mount(){const ref=$('referrer');const anchor=ref?ref.closest('label'):$('age')&&$('age').closest('label');if(!anchor)return;
   const l=el('label','🔁 عنده مراجعة سابقة عدنا؟');l.className='full';regPv=pvSelect('');regPv.id='prevVisit';l.append(regPv);const hint=el('small','','muted');hint.id='pvHint';l.append(hint);
-  regSg=surgBlock([]);regSg.classList.add('full');anchor.after(l,regSg)})();
+  const l2=el('label','📄 عنده سونار قديم لنفس الفحص؟');l2.className='full';regOs=osSelect('');regOs.id='oldScan';l2.append(regOs);
+  regSg=surgBlock([]);regSg.classList.add('full');anchor.after(l,l2,regSg)})();
  function samePart(a,b){const A=String(a||'').split(' + '),B=String(b||'').split(' + ');return A.some(x=>B.includes(x))}
  function autoPv(){if(!regPv||!history.length)return;const ex=$('exam').value+($('twoExams')&&$('twoExams').checked?' + '+$('exam2').value:'');const same=history.find(h=>samePart(h.exam,ex));
   regPv.value=same?'same':'other';$('pvHint').textContent=same?'آخر مرة لنفس الفحص: '+same.day:'آخر زيارة: '+history[0].day+' ('+history[0].exam+')'}
  $('phone').addEventListener('input',()=>{history=[];if($('pvHint'))$('pvHint').textContent='';const ph=normPhone($('phone').value);if(!ph||!cloud.db||!cloud.user)return;
   setTimeout(async()=>{try{if(normPhone($('phone').value)!==ph)return;const snap=await FB.getDocs(FB.query(FB.collection(cloud.db,'clinics',CLINIC_ID,'patients'),FB.where('phone','==',ph),FB.limit(30)));if(normPhone($('phone').value)!==ph)return;
-   history=snap.docs.map(d=>d.data()).filter(p=>p.status!=='ملغي'&&p.day!==day()).sort((a,b)=>String(b.day).localeCompare(String(a.day)));if(history.length)autoPv();else if(regPv&&!regPv.value){regPv.value='no';$('pvHint').textContent='ما لگينا زيارة سابقة بهذا الرقم'}}catch(e){console.error(e)}},500)});
+   history=snap.docs.map(d=>d.data()).filter(p=>p.status!=='ملغي'&&p.day!==day()).sort((a,b)=>String(b.day).localeCompare(String(a.day)));if(history.length)autoPv();else if(regPv){regPv.value='no';$('pvHint').textContent='ما لگينا زيارة سابقة بهذا الرقم'}}catch(e){console.error(e)}},500)});
  ['exam','exam2','twoExams'].forEach(id=>$(id)&&$(id).addEventListener('change',()=>setTimeout(autoPv,0)));
- $('patientForm').addEventListener('reset',()=>setTimeout(()=>{if(regSg)regSg.value=[];if(regPv)regPv.value='';history=[];if($('pvHint'))$('pvHint').textContent=''},0));
- window.__regExtra=function(){return{surgeries:regSg?regSg.value:[],prevVisit:regPv?regPv.value:''}};
+ $('patientForm').addEventListener('reset',()=>setTimeout(()=>{if(regSg)regSg.value=[];if(regPv)regPv.value='no';if(regOs)regOs.value='no';history=[];if($('pvHint'))$('pvHint').textContent=''},0));
+ window.__regExtra=function(){return{surgeries:regSg?regSg.value:[],prevVisit:regPv?regPv.value:'no',oldScan:regOs?regOs.value:'no'}};
  // ---------- Show in today's list and the now/next cards ----------
- function tags(p){const t=[];const pv=pvText(p);if(pv)t.push(['hx-tag hx-pv',pv]);if((p.surgeries||[]).length)t.push(['hx-tag hx-sg','🩹 '+p.surgeries.map(surgText).join(' • ')]);return t}
+ function tags(p){const t=[];const pv=pvText(p);if(pv)t.push(['hx-tag hx-pv',pv]);if(p.oldScan==='yes')t.push(['hx-tag hx-os','📄 عنده سونار قديم']);if((p.surgeries||[]).length)t.push(['hx-tag hx-sg','🩹 '+p.surgeries.map(surgText).join(' • ')]);return t}
  function put(host,p,cls){let w=host.querySelector('.'+cls);const t=p?tags(p):[];const key=JSON.stringify(t);if(!t.length){if(w)w.remove();return}if(w&&w.dataset.k===key)return;if(!w){w=el('span','',cls);host.append(w)}w.dataset.k=key;w.replaceChildren(...t.map(([c,x])=>el('span',x,c)))}
  function run(){document.querySelectorAll('#rows tr[data-id]').forEach(tr=>{const p=list().find(x=>x.id===tr.dataset.id),td=tr.querySelector('td:nth-child(2)');if(td)put(td,p,'hx-row')});
   const c=$('nowCard');if(c){const inside=list().find(p=>p.status==='داخل الفحص'||(typeof OUT!=='undefined'&&p.status===OUT));let next=null;try{next=nextPatient()}catch(e){}
