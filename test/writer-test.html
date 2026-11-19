@@ -215,7 +215,7 @@ setInterval(()=>{try{if(list().some(p=>p.status===OUT))scheduleRender()}catch{}}
 
 async function copyText(t){try{await navigator.clipboard.writeText(t);return true}catch{const ta=el('textarea');ta.value=t;ta.setAttribute('readonly','');ta.style.position='fixed';ta.style.opacity='0';document.body.append(ta);ta.select();let ok=false;try{ok=document.execCommand('copy')}catch{}ta.remove();return ok}}
 function cpBtn(label,value,cls,p){const b=el('button',undefined,'cp'+(cls?' '+cls:''));b.type='button';b.append(el('span',label),el('small','⧉'));b.title='اضغط للنسخ';b.onclick=async e=>{e.stopPropagation();if(await copyText(value)){try{window.onCopied&&window.onCopied(p)}catch(e){}b.classList.add('ok');b.lastChild.textContent='✓';toast('تم النسخ: '+value);setTimeout(()=>{b.classList.remove('ok');b.lastChild.textContent='⧉'},1500)}else toast('تعذر النسخ؛ حدّد النص وانسخه يدويًا')};return b}
-var BUILD='20261119195814';
+var BUILD='20261119201003';
 
 // ===== Cloud version 0.3 (Firebase) — identical in both screens =====
 var CLINIC_ID='fallujah',DOCTOR_EMAIL='doctor@fallujah.clinic',EMAIL_DOMAIN='fallujah.clinic';
@@ -970,7 +970,7 @@ body:not(.dark) #patientForm .f-ok{background:#eefaf3!important;border-color:#b9
    refreshSharedState();if(S.patients.some(p=>p.id===id))continue;
    const base=(S.prices&&S.prices.us)||20000,no=Math.max(0,...list().map(p=>p.no||0))+1,ph=normPhone(String(b.phone||''))||'';
    S.patients.push({id,no,name:String(b.name||'مريض واتساب').replace(/\s+/g,' ').trim().slice(0,70),phone:ph,age:ageOf(b.age),ageLabel:String(b.age||'').slice(0,30),exam:String(b.exam||'').trim().slice(0,120)||'غير محدد',base,originalPrice:base,priceEdited:false,discount:0,reason:'',paid:0,
-    status:'مؤجل',statusReason:TAG+' — واتساب'+(b.time?' • '+String(b.time).slice(0,80):''),statusBy:'واتساب',statusAt:stamp(),clinic:clinic(),regBy:'واتساب',regAt:b.at||stamp(),wa:true,waBooking:b.id,waNotes:String(b.notes||'').slice(0,200),referrer:''});
+    status:'مؤجل',statusReason:'🤖 حجز واتساب',waTime:String(b.time||'').slice(0,80),statusBy:'واتساب',statusAt:stamp(),clinic:clinic(),regBy:'واتساب',regAt:b.at||stamp(),wa:true,waBooking:b.id,waNotes:String(b.notes||'').slice(0,200),referrer:''});
    added.push(b.name);mark(b.id)}
   if(added.length){audit('تسجيل آلي من واتساب — '+added.join('، '));render();toast('📱 حجز جديد من واتساب: '+added.join('، '));try{if(role()!=='doctor')playSound('رسالة جديدة')}catch(e){}}
  }catch(e){console.warn('bookings',e)}finally{busy=false}}
@@ -1000,6 +1000,25 @@ body:not(.dark) #patientForm .f-ok{background:#eefaf3!important;border-color:#b9
   audit('قبض '+money(amt)+' — '+q.name+' (حجز واتساب)');render();toast('✓ انقبض '+money(amt)+' من '+q.name)}
  window.__waAskCollect=async function(id){if(!__waCanCollect())return;const q=list().find(x=>x.id===id);if(!q||q.paid)return;const amt=q.base-(q.discount||0);
   const ok=await askDialog('💵 قبضتي '+money(amt)+' من '+q.name+'؟ (إذا المبلغ غلط، اضغطي «تراجع» وعدّلي السعر من ✎ أول)',{ok:'✓ نعم قبضت'});if(ok)collect(id)};
+})();
+</script>
+<style id="v24css">
+#rows tr[data-id^="wa-"] button.b-arrive{background:#25a35a!important;color:#fff!important;border-color:#25a35a!important;font-weight:800;min-width:42%;font-size:16px}
+#rows tr[data-id^="wa-"] button.wa-pay{background:#e08a1e!important;color:#fff!important;border-color:#e08a1e!important;font-weight:800;min-width:42%;font-size:16px}
+#rows tr[data-id^="wa-"] .wa-tag,#rows tr[data-id^="wa-"] .wa-unpaid{margin:2px 0 2px 6px;vertical-align:middle}
+#rows tr[data-id^="wa-"] td.wa-st .wa-when{display:inline-block;padding:2px 8px;border-radius:8px;background:#ffffff10;font-size:13px;font-weight:700}
+</style>
+<script id="v24js">
+(function(){
+ function when(p){let t=String(p.waTime||'');if(!t){const r=String(p.statusReason||'');const i=r.indexOf('•');t=i>=0?r.slice(i+1):''}
+  t=toAsciiDigits(t).replace(/20\d\d-\d\d-\d\d/g,' ').replace(/\(.*?\)/g,' ').replace(/(^|\s)(اليوم|الأحد|الاثنين|الإثنين|الثلاثاء|الأربعاء|الاربعاء|الخميس|الجمعة|السبت)(?=\s|،|,|$)/g,' ').replace(/[،,•]/g,' ').replace(/واتساب/g,' ').replace(/\s+/g,' ').trim();return t.slice(0,36)}
+ function fix(){document.querySelectorAll('tr[data-id^="wa-"]').forEach(tr=>{const p=S.patients.find(x=>x.id===tr.dataset.id);if(!p)return;const td=tr.children,nameTd=td[1],stTd=td[2],actTd=td[3];
+   const tag=tr.querySelector('.wa-tag');if(tag){tag.textContent='🤖 حجز واتساب';if(nameTd){const nm=nameTd.querySelector('.cp');if(tag.parentNode!==nameTd||tag.previousElementSibling!==nm){if(nm)nm.after(tag);else nameTd.prepend(tag)}}}
+   const un=tr.querySelector('.wa-unpaid');if(un&&tag&&un.previousElementSibling!==tag)tag.after(un);
+   if(stTd&&!p.arrivedAt&&p.status==='مؤجل'){const w=when(p);if(!stTd.classList.contains('wa-st')||stTd.dataset.w!==w){stTd.classList.add('wa-st');stTd.dataset.w=w;stTd.replaceChildren();if(w)stTd.append(el('small','⏰ '+w,'wa-when'))}}
+   else if(stTd&&stTd.classList.contains('wa-st')){stTd.classList.remove('wa-st')}
+   if(actTd){const a=tr.querySelector('.b-arrive'),pay=tr.querySelector('.wa-pay'),first=pay||a;if(first&&actTd.firstElementChild!==first)actTd.prepend(first)}})}
+ const _r=render;render=function(){const r=_r.apply(this,arguments);try{fix()}catch(e){console.error(e)}return r};try{fix()}catch(e){}
 })();
 </script>
 </body></html>
