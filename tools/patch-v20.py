@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""v0.20: «↕ ترتيب الفحوصات» beside the exam list — the secretary (or anyone) moves exams
+"""v0.20: «↕ ترتيب الفحوصات» in Settings (above the exams table) — the secretary (or anyone) moves exams
 up/down or to the top; the order is saved to the clinic's shared catalog, so the list
 opens in that order on every screen of the clinic. Doctor + secretary screens; run
 tools/make-writer.py afterwards."""
@@ -31,10 +31,9 @@ LAYER = r"""<style id="v20css">
    try{localStorage.setItem(CATALOG_KEY,JSON.stringify(examCatalog))}catch{}pushCatalog();refreshExamOptions();if(typeof renderCatalog==='function')try{renderCatalog()}catch(e){}
    audit('تغيير ترتيب الفحوصات');toast('✓ انحفظ الترتيب')});ok.type='button';ok.className='primary';
   const no=btn('تراجع',()=>d.close());no.type='button';a.append(ok,no);d.append(a);d.oncancel=e=>{e.preventDefault();d.close()};d.showModal()}
- const ex=$('exam');if(!ex)return;const lab=ex.closest('label');const b=btn('↕ ترتيب الفحوصات',openOrder);b.type='button';b.className='ord-btn';
- (lab||ex.parentNode).after(b);
- // keep the button right under the exam list when the form is reordered
- const fix=()=>{const l=$('exam').closest('label');if(l&&l.nextElementSibling!==b)l.after(b)};setTimeout(fix,0);
+ // The button lives in Settings, above the exams-and-prices table.
+ const rows=$('catalogRows');if(!rows)return;const wrap=rows.closest('.tablewrap')||rows.closest('table');const b=btn('↕ ترتيب الفحوصات بقائمة التسجيل',openOrder);b.type='button';b.className='ord-btn';b.style.margin='4px 0 12px';
+ wrap.before(b);
 })();
 </script>
 </body></html>"""
