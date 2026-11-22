@@ -215,7 +215,7 @@ setInterval(()=>{try{if(list().some(p=>p.status===OUT))scheduleRender()}catch{}}
 
 async function copyText(t){try{await navigator.clipboard.writeText(t);return true}catch{const ta=el('textarea');ta.value=t;ta.setAttribute('readonly','');ta.style.position='fixed';ta.style.opacity='0';document.body.append(ta);ta.select();let ok=false;try{ok=document.execCommand('copy')}catch{}ta.remove();return ok}}
 function cpBtn(label,value,cls,p){const b=el('button',undefined,'cp'+(cls?' '+cls:''));b.type='button';b.append(el('span',label),el('small','⧉'));b.title='اضغط للنسخ';b.onclick=async e=>{e.stopPropagation();if(await copyText(value)){try{window.onCopied&&window.onCopied(p)}catch(e){}b.classList.add('ok');b.lastChild.textContent='✓';toast('تم النسخ: '+value);setTimeout(()=>{b.classList.remove('ok');b.lastChild.textContent='⧉'},1500)}else toast('تعذر النسخ؛ حدّد النص وانسخه يدويًا')};return b}
-var BUILD='20261122090000';
+var BUILD='20261122100321';
 
 // ===== Cloud version 0.3 (Firebase) — identical in both screens =====
 var CLINIC_ID='fallujah',DOCTOR_EMAIL='doctor@fallujah.clinic',EMAIL_DOMAIN='fallujah.clinic';
@@ -788,7 +788,7 @@ body:not(.dark) .hx-pv{color:#7a4a0c;background:#fde9c8}body:not(.dark) .hx-sg{c
   if(!bar){bar=el('div');bar.id='pendBar';const m=document.querySelector('main');const h=m&&m.querySelector('header');(h||m).after?((h||m).after(bar)):m.prepend(bar)}bar.replaceChildren();
   L.forEach(x=>{const cur=examCatalog.find(e=>e.name===x.name)||x,r=el('div',undefined,'pend-row');r.append(el('span','🆕 فحص جديد أضافته '+(x.by||'')+': «'+x.name+'» بسعر '+money(cur.adult)+(cur.child!==cur.adult?' (الأطفال '+money(cur.child)+')':''),'pend-t'));
    const ok=btn('✓ تأكيد السعر',()=>{audit('تأكيد سعر فحص — '+x.name);clearPending(x.name);toast('✓ تأكد السعر')});ok.className='primary';
-   const ed=btn('✎ تعديل السعر',()=>{document.querySelector('#nav button[data-page=settings]').click();setTimeout(()=>{const t=[...document.querySelectorAll('#catalogRows input')].find(i=>i.value===x.name);if(t){t.scrollIntoView({block:'center'});t.focus()}},300)});r.append(ok,ed);bar.append(r)})}
+   const ed=btn('✎ تعديل السعر',()=>{document.querySelector('#nav button[data-page=settings]').click();setTimeout(()=>{const t=[...document.querySelectorAll('#catalogRows input')].find(i=>i.value===x.name);if(t){try{window.__openExam&&window.__openExam(t)}catch(e){}t.scrollIntoView({block:'center'});t.focus()}},300)});r.append(ok,ed);bar.append(r)})}
  const baseRefresh=refreshExamOptions;refreshExamOptions=function(){const r=baseRefresh.apply(this,arguments);['exam','exam2'].forEach(id=>{const s=$(id);if(!s||[...s.options].some(o=>o.value===NEWX))return;const o=el('option','＋ فحص جديد…');o.value=NEWX;s.append(o)});return r};
  ['exam','exam2'].forEach(id=>{const s=$(id);if(!s)return;let prev=s.value;s.addEventListener('focus',()=>{if(s.value!==NEWX)prev=s.value});
   s.addEventListener('change',async e=>{if(s.value!==NEWX){prev=s.value;return}e.stopImmediatePropagation();s.value=prev;const n=await addExam();if(n){s.value=n;prev=n}s.dispatchEvent(new Event('change'))},true)});
@@ -881,7 +881,7 @@ body:not(.dark) #patientForm .f-ok{background:#eefaf3!important;border-color:#b9
 <script id="v19js">
 (function(){
  // Faint red when empty, faint green when filled: name, age, exam, price, phone.
- const groups=[['name'],['age','ageMonths','ageDays'],['exam'],['pricePreset'],['phone']];
+ const groups=[['name'],['age','ageMonths','ageDays'],['exam'],['pricePreset']];
  function paint(){groups.forEach(ids=>{const els=ids.map(id=>$(id)).filter(Boolean);if(!els.length)return;const ok=els.some(e=>String(e.value||'').trim()!==''&&e.value!=='__newexam__');els.forEach(e=>{e.classList.toggle('f-ok',ok);e.classList.toggle('f-empty',!ok)})})}
  const f=$('patientForm');if(!f)return;f.addEventListener('input',paint);f.addEventListener('change',paint);f.addEventListener('reset',()=>setTimeout(paint,0));
  const base=render;render=function(){const r=base.apply(this,arguments);try{paint()}catch(e){}return r};paint();
@@ -1024,14 +1024,13 @@ body:not(.dark) #patientForm .f-ok{background:#eefaf3!important;border-color:#b9
  const hint=el('small','','muted');
  box.append(bPaid,bTel,when,hint);
  const acts=form.querySelector('.actions');if(acts)acts.before(box);else form.append(box);
- function setMode(m){mode=m;bPaid.classList.toggle('on',m==='paid');bTel.classList.toggle('on',m==='tel');bPaid.setAttribute('aria-pressed',String(m==='paid'));bTel.setAttribute('aria-pressed',String(m==='tel'));when.classList.toggle('hidden',m!=='tel');hint.textContent=m==='tel'?'ينحجز بدون فلوس • رقم الهاتف ضروري • لما يوصل اضغطي «✓ وصل» وبعدين «💵 قبض»':'ينقبض المبلغ تلقائيًا مع التسجيل'}
+ function setMode(m){mode=m;bPaid.classList.toggle('on',m==='paid');bTel.classList.toggle('on',m==='tel');bPaid.setAttribute('aria-pressed',String(m==='paid'));bTel.setAttribute('aria-pressed',String(m==='tel'));when.classList.toggle('hidden',m!=='tel');hint.textContent=m==='tel'?'ينحجز بدون فلوس • رقم الهاتف اختياري • لما يوصل اضغطي «✓ وصل» وبعدين «💵 قبض»':'ينقبض المبلغ تلقائيًا مع التسجيل'}
  setMode('paid');
  const _x=window.__regExtra;
  window.__regExtra=function(){const base=_x?_x():{};if(mode!=='tel')return base;
   return Object.assign({},base,{id:'wa-tel-'+uid(),wa:true,tel:true,status:'مؤجل',statusReason:'📞 حجز تلفون',waTime:when.value.trim().slice(0,60),statusBy:roleName(),statusAt:stamp()})};
  const _sub=form.onsubmit;
  form.onsubmit=function(e){
-  if(mode==='tel'&&!normPhone($('phone').value)){e.preventDefault();$('formError').textContent='📞 حجز التلفون يحتاج رقم الهاتف (مثل 07701234567) حتى نتواصل وياه.';$('phone').focus();return}
   const before=S.patients.length,wasTel=mode==='tel';const r=_sub?_sub.call(this,e):undefined;
   if(S.patients.length>before){if(wasTel){const p=S.patients[S.patients.length-1];if(p&&p.tel){audit('📞 حجز تلفون — '+p.name+' — غير مدفوع');toast('📞 انحجز '+p.name+' • ما دافع — يدفع لما يوصل')}}when.value='';setMode('paid')}
   return r};
@@ -1041,6 +1040,84 @@ body:not(.dark) #patientForm .f-ok{background:#eefaf3!important;border-color:#b9
    let u=tr.querySelector('.tel-unpaid');const need=!p.arrivedAt&&!p.paid&&!p.refunded&&p.status!=='ملغي'&&(p.base-(p.discount||0))>0;
    if(need&&!u&&t){u=el('span','💵 ما دافع','tel-unpaid');t.after(u)}else if(!need&&u)u.remove()})}
  const _r=render;render=function(){const r=_r.apply(this,arguments);try{telRows()}catch(e){console.error(e)}return r};try{telRows()}catch(e){}
+})();
+</script>
+<style id="v28css">
+#settings .set-card{padding:0!important;margin-bottom:12px!important;overflow:hidden}
+#settings .set-head{display:flex;align-items:center;gap:10px;width:100%;padding:16px 18px;background:transparent;border:0;color:inherit;font:inherit;font-size:18px;font-weight:800;text-align:right;cursor:pointer}
+#settings .set-head .set-n{margin-inline-start:auto;font-size:13px;font-weight:700;padding:2px 10px;border-radius:20px;background:#ffffff14}
+#settings .set-head::after{content:'▾';font-size:16px;opacity:.7;transition:transform .2s}
+#settings .set-card.open .set-head::after{transform:rotate(180deg)}
+#settings .set-body{padding:0 18px 16px}
+#settings .set-card:not(.open) .set-body{display:none}
+#settings .set-body>h2{display:none}
+#settings .set-hint{font-size:13px;margin:0 0 10px}
+#settings .set-tools{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 10px}
+#settings .set-tools>*{flex:1 1 140px;margin:0!important}
+#settings .set-hide{display:none!important}
+#settings .set-foot{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+#settings .set-foot button{flex:1 1 140px}
+#settings table:has(#catalogRows){display:block;width:100%}
+#settings table:has(#catalogRows) thead{display:none!important}
+#settings table:has(#catalogRows) tbody{display:block}
+#catalogRows tr.cat-c{display:flex!important;flex-wrap:wrap;align-items:center;gap:6px;padding:6px 4px!important;margin:0!important;border:0!important;border-bottom:1px solid #ffffff14!important;border-radius:0!important;background:transparent!important;box-shadow:none!important}
+#catalogRows tr.cat-c>td{display:none!important}
+#catalogRows tr.cat-c>td.cat-sum{display:flex!important;flex:1 1 100%!important;align-items:center;gap:8px;padding:0!important;border:0!important;width:auto!important}
+#catalogRows .cat-sum b{flex:1;min-width:0;overflow-wrap:anywhere;font-size:15px}
+#catalogRows .cat-sum .cat-p{white-space:nowrap;font-size:14px;opacity:.85;direction:rtl}
+#catalogRows .cat-sum button{padding:6px 12px;min-width:44px}
+#catalogRows tr.cat-c.ed{background:#ffffff08!important;border-radius:10px!important;padding:8px!important;margin:4px 0!important}
+#catalogRows tr.cat-c.ed>td:not(.cat-sum){display:block!important;flex:1 1 30%!important;padding:0!important;border:0!important;width:auto!important}
+#catalogRows tr.cat-c.ed>td:last-child{display:flex!important;flex:1 1 100%!important;gap:6px}
+#catalogRows tr.cat-c.ed>td:last-child button{flex:1}
+#catalogRows tr.cat-c.ed .cat-lbl{display:block!important;margin-bottom:3px}
+#catalogRows tr.cat-c.cat-off{display:none!important}
+</style>
+<script id="v28js">
+(function(){
+ const st=document.getElementById('settings');if(!st||!document.getElementById('docNewExamForm'))return;
+ const mk=(t,txt,c)=>{const e=document.createElement(t);if(txt!=null)e.textContent=txt;if(c)e.className=c;return e};
+ const b=(txt,fn,c)=>{const e=mk('button',txt,c);e.type='button';e.onclick=fn;return e};
+ let openKey=null,search='';const editing=new Set();
+ function kindOf(c){if(c.id==='refCard')return'ref';if(c.querySelector('#catalogRows'))return'exam';if(c.querySelector('#secretaryAccountForm'))return'acc';return''}
+ const TITLE={ref:'👨‍⚕️ الأطباء المحولين',exam:'🩺 الفحوصات والأسعار',acc:'👤 حسابات الكادر'};
+ const HINT={ref:'اضغط ☆ حتى يطلع الطبيب أول القائمة.',exam:'كل سطر: سعر أقل من ١٠ سنوات • سعر ١٠ سنوات فأكثر (بالألف دينار). التعديل يطبّق على التسجيلات الجديدة فقط.',acc:'كل سكرتيرة أو كاتبة إلها حساب تدخل بيه من أي جهاز.'};
+ function count(k){try{if(k==='ref')return(S.referrers||[]).length;if(k==='exam')return examCatalog.length;if(k==='acc')return staffUsers.length}catch(e){}return''}
+ function setOpen(k){openKey=openKey===k?null:k;st.querySelectorAll('.set-card').forEach(c=>c.classList.toggle('open',c.dataset.k===openKey))}
+ function toggler(btnTxt,target,first){const t=b(btnTxt,()=>{const hid=target.classList.toggle('set-hide');t.classList.toggle('primary',hid);if(!hid){const f=target.querySelector(first);f&&f.focus()}},'primary');target.classList.add('set-hide');return t}
+ function fold(c){const k=kindOf(c);if(!k||c.dataset.k)return;c.dataset.k=k;c.classList.add('set-card');
+  const body=mk('div',null,'set-body');while(c.firstChild)body.append(c.firstChild);
+  const h=b('',()=>setOpen(k),'set-head');h.append(mk('span',TITLE[k]),mk('span','','set-n'));c.append(h,body);
+  body.querySelectorAll(':scope>p.muted,:scope>.section-note').forEach(p=>{if(!p.querySelector('input,button'))p.classList.add('set-hide')});
+  body.querySelector(':scope>h2')?.after(mk('p',HINT[k],'muted set-hint'));
+  if(k==='exam'){const form=document.getElementById('docNewExamForm'),wrap=document.getElementById('catalogRows').closest('.tablewrap');
+   const tools=mk('div',null,'set-tools');const q=mk('input');q.type='search';q.placeholder='🔍 ابحث عن فحص';q.id='catSearch';q.oninput=()=>{search=q.value.trim();filter()};
+   tools.append(toggler('＋ فحص جديد',form,'input'),q);const ord=body.querySelector('.ord-btn');if(ord){tools.append(ord)}form.before(tools)}
+  if(k==='acc'){const form=document.getElementById('secretaryAccountForm');form.before(toggler('＋ حساب جديد',form,'select'));
+   const foot=document.getElementById('openSecretaryPreview')?.closest('.actions');if(foot){foot.classList.add('set-foot');foot.classList.remove('actions');st.append(foot)}}
+  c.classList.toggle('open',openKey===k)}
+ function filter(){const s=search.toLowerCase();document.querySelectorAll('#catalogRows tr.cat-c').forEach(tr=>tr.classList.toggle('cat-off',!!s&&!tr.dataset.n.toLowerCase().includes(s)))}
+ function compact(){const root=document.getElementById('catalogRows');if(!root)return;
+  [...root.children].forEach(tr=>{if(tr.classList.contains('cat-c'))return;const ins=tr.querySelectorAll('input');if(ins.length<3)return;
+   const name=ins[0].value;tr.classList.add('cat-c');tr.dataset.n=name;
+   const sum=mk('td',null,'cat-sum');sum.append(mk('b',name),mk('span',ins[1].value+' • '+ins[2].value+' ألف','cat-p'));
+   const ed=b('✎',()=>{const on=tr.classList.toggle('ed');on?editing.add(name):editing.delete(name);ed.textContent=on?'✕':'✎';if(on)ins[1].focus()});ed.title='تعديل';sum.append(ed);tr.prepend(sum);
+   if(editing.has(name)){tr.classList.add('ed');ed.textContent='✕'}});
+  editing.forEach(n=>{if(![...root.children].some(tr=>tr.dataset.n===n))editing.delete(n)});filter()}
+ window.__openExam=function(inp){const tr=inp.closest('tr');if(openKey!=='exam')setOpen('exam');if(tr&&!tr.classList.contains('ed'))tr.querySelector('.cat-sum button')?.click();if(search){search='';const q=document.getElementById('catSearch');if(q)q.value='';filter()}};
+ function run(){try{st.querySelectorAll(':scope>.card').forEach(fold);compact();st.querySelectorAll('.set-card').forEach(c=>{const n=c.querySelector('.set-n');if(n){const v=count(c.dataset.k);n.textContent=v===''?'':v}})}catch(e){console.error(e)}}
+ // Saving an exam re-renders the list: drop the editing mark of the saved row so it closes.
+ document.getElementById('catalogRows').addEventListener('click',e=>{const x=e.target.closest('td:last-child button');if(x&&x.textContent==='حفظ'){const tr=x.closest('tr');tr&&editing.delete(tr.dataset.n)}},true);
+ const mo=new MutationObserver(()=>{mo.disconnect();run();watch()});function watch(){mo.observe(st,{childList:true,subtree:true})}
+ run();watch();
+})();
+</script>
+<script id="v29js">
+(function(){
+ // Phone is optional: neutral when empty, green when a valid number is typed.
+ const f=$('patientForm'),ph=$('phone');if(!f||!ph)return;
+ function paint(){const ok=!!normPhone(ph.value);ph.classList.toggle('f-ok',ok);ph.classList.remove('f-empty')}
+ f.addEventListener('input',paint);f.addEventListener('change',paint);f.addEventListener('reset',()=>setTimeout(paint,0));paint();
 })();
 </script>
 </body></html>
