@@ -215,7 +215,7 @@ setInterval(()=>{try{if(list().some(p=>p.status===OUT))scheduleRender()}catch{}}
 
 async function copyText(t){try{await navigator.clipboard.writeText(t);return true}catch{const ta=el('textarea');ta.value=t;ta.setAttribute('readonly','');ta.style.position='fixed';ta.style.opacity='0';document.body.append(ta);ta.select();let ok=false;try{ok=document.execCommand('copy')}catch{}ta.remove();return ok}}
 function cpBtn(label,value,cls,p){const b=el('button',undefined,'cp'+(cls?' '+cls:''));b.type='button';b.append(el('span',label),el('small','⧉'));b.title='اضغط للنسخ';b.onclick=async e=>{e.stopPropagation();if(await copyText(value)){try{window.onCopied&&window.onCopied(p)}catch(e){}b.classList.add('ok');b.lastChild.textContent='✓';toast('تم النسخ: '+value);setTimeout(()=>{b.classList.remove('ok');b.lastChild.textContent='⧉'},1500)}else toast('تعذر النسخ؛ حدّد النص وانسخه يدويًا')};return b}
-var BUILD='20261122090000';
+var BUILD='20261122095601';
 
 // ===== Cloud version 0.3 (Firebase) — identical in both screens =====
 var CLINIC_ID='fallujah',DOCTOR_EMAIL='doctor@fallujah.clinic',EMAIL_DOMAIN='fallujah.clinic';
@@ -879,7 +879,7 @@ body:not(.dark) #patientForm .f-ok{background:#eefaf3!important;border-color:#b9
 <script id="v19js">
 (function(){
  // Faint red when empty, faint green when filled: name, age, exam, price, phone.
- const groups=[['name'],['age','ageMonths','ageDays'],['exam'],['pricePreset'],['phone']];
+ const groups=[['name'],['age','ageMonths','ageDays'],['exam'],['pricePreset']];
  function paint(){groups.forEach(ids=>{const els=ids.map(id=>$(id)).filter(Boolean);if(!els.length)return;const ok=els.some(e=>String(e.value||'').trim()!==''&&e.value!=='__newexam__');els.forEach(e=>{e.classList.toggle('f-ok',ok);e.classList.toggle('f-empty',!ok)})})}
  const f=$('patientForm');if(!f)return;f.addEventListener('input',paint);f.addEventListener('change',paint);f.addEventListener('reset',()=>setTimeout(paint,0));
  const base=render;render=function(){const r=base.apply(this,arguments);try{paint()}catch(e){}return r};paint();
@@ -1048,14 +1048,13 @@ body:not(.dark) #patientForm .f-ok{background:#eefaf3!important;border-color:#b9
  const hint=el('small','','muted');
  box.append(bPaid,bTel,when,hint);
  const acts=form.querySelector('.actions');if(acts)acts.before(box);else form.append(box);
- function setMode(m){mode=m;bPaid.classList.toggle('on',m==='paid');bTel.classList.toggle('on',m==='tel');bPaid.setAttribute('aria-pressed',String(m==='paid'));bTel.setAttribute('aria-pressed',String(m==='tel'));when.classList.toggle('hidden',m!=='tel');hint.textContent=m==='tel'?'ينحجز بدون فلوس • رقم الهاتف ضروري • لما يوصل اضغطي «✓ وصل» وبعدين «💵 قبض»':'ينقبض المبلغ تلقائيًا مع التسجيل'}
+ function setMode(m){mode=m;bPaid.classList.toggle('on',m==='paid');bTel.classList.toggle('on',m==='tel');bPaid.setAttribute('aria-pressed',String(m==='paid'));bTel.setAttribute('aria-pressed',String(m==='tel'));when.classList.toggle('hidden',m!=='tel');hint.textContent=m==='tel'?'ينحجز بدون فلوس • رقم الهاتف اختياري • لما يوصل اضغطي «✓ وصل» وبعدين «💵 قبض»':'ينقبض المبلغ تلقائيًا مع التسجيل'}
  setMode('paid');
  const _x=window.__regExtra;
  window.__regExtra=function(){const base=_x?_x():{};if(mode!=='tel')return base;
   return Object.assign({},base,{id:'wa-tel-'+uid(),wa:true,tel:true,status:'مؤجل',statusReason:'📞 حجز تلفون',waTime:when.value.trim().slice(0,60),statusBy:roleName(),statusAt:stamp()})};
  const _sub=form.onsubmit;
  form.onsubmit=function(e){
-  if(mode==='tel'&&!normPhone($('phone').value)){e.preventDefault();$('formError').textContent='📞 حجز التلفون يحتاج رقم الهاتف (مثل 07701234567) حتى نتواصل وياه.';$('phone').focus();return}
   const before=S.patients.length,wasTel=mode==='tel';const r=_sub?_sub.call(this,e):undefined;
   if(S.patients.length>before){if(wasTel){const p=S.patients[S.patients.length-1];if(p&&p.tel){audit('📞 حجز تلفون — '+p.name+' — غير مدفوع');toast('📞 انحجز '+p.name+' • ما دافع — يدفع لما يوصل')}}when.value='';setMode('paid')}
   return r};
@@ -1065,6 +1064,14 @@ body:not(.dark) #patientForm .f-ok{background:#eefaf3!important;border-color:#b9
    let u=tr.querySelector('.tel-unpaid');const need=!p.arrivedAt&&!p.paid&&!p.refunded&&p.status!=='ملغي'&&(p.base-(p.discount||0))>0;
    if(need&&!u&&t){u=el('span','💵 ما دافع','tel-unpaid');t.after(u)}else if(!need&&u)u.remove()})}
  const _r=render;render=function(){const r=_r.apply(this,arguments);try{telRows()}catch(e){console.error(e)}return r};try{telRows()}catch(e){}
+})();
+</script>
+<script id="v29js">
+(function(){
+ // Phone is optional: neutral when empty, green when a valid number is typed.
+ const f=$('patientForm'),ph=$('phone');if(!f||!ph)return;
+ function paint(){const ok=!!normPhone(ph.value);ph.classList.toggle('f-ok',ok);ph.classList.remove('f-empty')}
+ f.addEventListener('input',paint);f.addEventListener('change',paint);f.addEventListener('reset',()=>setTimeout(paint,0));paint();
 })();
 </script>
 </body></html>
