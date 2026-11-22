@@ -215,7 +215,7 @@ setInterval(()=>{try{if(list().some(p=>p.status===OUT))scheduleRender()}catch{}}
 
 async function copyText(t){try{await navigator.clipboard.writeText(t);return true}catch{const ta=el('textarea');ta.value=t;ta.setAttribute('readonly','');ta.style.position='fixed';ta.style.opacity='0';document.body.append(ta);ta.select();let ok=false;try{ok=document.execCommand('copy')}catch{}ta.remove();return ok}}
 function cpBtn(label,value,cls,p){const b=el('button',undefined,'cp'+(cls?' '+cls:''));b.type='button';b.append(el('span',label),el('small','⧉'));b.title='اضغط للنسخ';b.onclick=async e=>{e.stopPropagation();if(await copyText(value)){try{window.onCopied&&window.onCopied(p)}catch(e){}b.classList.add('ok');b.lastChild.textContent='✓';toast('تم النسخ: '+value);setTimeout(()=>{b.classList.remove('ok');b.lastChild.textContent='⧉'},1500)}else toast('تعذر النسخ؛ حدّد النص وانسخه يدويًا')};return b}
-var BUILD='20261121210000';
+var BUILD='20261122090000';
 
 // ===== Cloud version 0.3 (Firebase) — identical in both screens =====
 var CLINIC_ID='karma',DOCTOR_EMAIL='doctor@fallujah.clinic',EMAIL_DOMAIN='fallujah.clinic';
@@ -958,11 +958,13 @@ body:not(.dark) #patientForm .f-ok{background:#eefaf3!important;border-color:#b9
    if(p.status==='مؤجل'&&!p.arrivedAt)row.querySelectorAll('button').forEach(b=>{if(/للانتظار|إعادة للانتظار|وصل/.test(b.textContent)){b.textContent='✓ وصل';b.title='المريض وصل — يدخل الانتظار وينقبض المبلغ';b.classList.add('b-arrive');b.style.cssText+=';background:#25a35a;color:#fff;border-color:#25a35a'}else if(/قبض/.test(b.textContent)&&!/استرجاع/.test(b.textContent))b.remove()});row.querySelectorAll('button').forEach(b=>{if(/قبض/.test(b.textContent)&&!/استرجاع/.test(b.textContent)&&!b.classList.contains('wa-pay'))b.remove()});let un=row.querySelector('.wa-unpaid');const need=p.arrivedAt&&!p.paid&&!p.refunded&&p.status!=='ملغي'&&(p.base-(p.discount||0))>0;if(need&&!un){un=el('span','💵 غير مدفوع','wa-unpaid');row.querySelector('.wa-tag')?.after(un)}else if(!need&&un)un.remove();if(need&&window.__waCanCollect&&__waCanCollect()&&!row.querySelector('.wa-pay')){const pb=btn('💵 قبض '+money(p.base-(p.discount||0)),()=>window.__waAskCollect(p.id));pb.className='wa-pay';const anyBtn=row.querySelector('button');(anyBtn&&anyBtn.parentNode?anyBtn.parentNode:row).prepend(pb)}else if(!need)row.querySelector('.wa-pay')?.remove()})}
  const _r=render;render=function(){const r=_r.apply(this,arguments);try{tag()}catch(e){console.error(e)}return r};try{tag()}catch(e){}
  // Backup of the whole day to n8n (doctor + secretary screens).
- const backupRole=role()==='secretary'; // one backup source per clinic, every 2 hours (saves n8n executions)let lastBody='';
- function backup(){if(!backupRole||!cloud.user||!navigator.onLine)return;try{const c=clinic(),own=x=>!x.clinic||x.clinic===c;const data={patients:S.patients.filter(own),ledger:S.ledger.filter(own),expenses:(S.expenses||[]).filter(own),closes:(S.closes||[]).filter(own),messages:(S.messages||[]).filter(own).slice(0,200),audit:(S.audit||[]).filter(own).slice(0,500)};
+ const backupRole=role()==='secretary'; // periodic backup from the secretary screen only, every 4 hours (saves n8n executions)let lastBody='';
+ function backup(){if(!cloud.user||!navigator.onLine)return;try{const c=clinic(),own=x=>!x.clinic||x.clinic===c;const data={patients:S.patients.filter(own),ledger:S.ledger.filter(own),expenses:(S.expenses||[]).filter(own),closes:(S.closes||[]).filter(own),messages:(S.messages||[]).filter(own).slice(0,200),audit:(S.audit||[]).filter(own).slice(0,500)};
   if(!data.patients.length&&!data.ledger.length)return;const body=JSON.stringify({clinic:CLINIC_ID,day:S.day,by:roleName(),data});if(body===lastBody)return;lastBody=body;
   fetch(BU,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body,keepalive:body.length<60000}).then(r=>{if(!r.ok)lastBody=''}).catch(()=>{lastBody=''})}catch(e){console.warn('backup',e)}}
- setInterval(backup,2*3600000);setTimeout(backup,5*60000);
+ setInterval(()=>{if(backupRole)backup()},4*3600000);setTimeout(()=>{if(backupRole)backup()},5*60000);
+ // Full backup right after the cash box is closed (from any screen that closes it). Watching local state costs nothing.
+ let lastCloses=-1;setInterval(()=>{try{const c=clinic(),n=(S.closes||[]).filter(x=>!x.clinic||x.clinic===c).length;if(lastCloses>=0&&n>lastCloses){lastBody='';backup()}lastCloses=n}catch(e){}},15000);
  window.__pullBookings=pull;window.__backupNow=()=>{lastBody='';backup()};
 })();
 </script>
