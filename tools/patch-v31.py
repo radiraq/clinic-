@@ -8,6 +8,8 @@ booking type:
   3) small chips: booking type, status / appointment, price + paid / not paid (one chip)
   4) one action row: the main action is the only wide button (وصل / إدخال / إنهاء / قبض),
      then small buttons: 🟢 رابط, 📞 (call menu), ⋯
+Icons only on the phone for small buttons and the booking tag (words stay in the tooltip);
+the price chip is red when unpaid and ends with ✓ when paid.
 Removed duplicates: the separate «💵 ما دافع» badge (the price chip says it), the 🕒 time when
 ⏳ is shown, the full-width «رابط الحجز» button.
 New: «📞» menu next to the WhatsApp link, only when the patient has a valid phone:
@@ -55,7 +57,7 @@ ADD = r"""<style id="v31css">
  #rows tr[data-id]>td.m-pay small~small{display:none}
  #rows tr[data-id]>td.m-pay.unpaid{background:#e5484d22;color:#ff8080}
  #rows tr[data-id]>td.m-pay.paid small{display:none}
- #rows tr[data-id]>td.m-pay.paid::after{content:'✓ مدفوع';color:#7bdbc2}
+ #rows tr[data-id]>td.m-pay.paid::after{content:'✓';color:#7bdbc2;font-weight:800}
  /* 4: one action row */
  #rows tr[data-id]>td.m-act{order:5;flex:1 1 100%;display:flex;flex-wrap:wrap;align-items:stretch;gap:5px;margin-top:4px}
  #rows tr[data-id]>td.m-act>*{flex:0 0 auto;min-width:0!important}
@@ -67,7 +69,10 @@ ADD = r"""<style id="v31css">
  #rows tr[data-id]>td.m-act>details>summary{min-width:38px;padding:0 4px;min-height:40px;display:flex;align-items:center;justify-content:center;box-sizing:border-box}
  #rows tr[data-id]>td.m-act .wa-link-btn .m-long{display:none}
 }
-@media(max-width:379px){#rows tr[data-id]>td.m-act .wa-link-btn .m-word{display:none}}
+@media(max-width:760px){#rows tr[data-id] .m-word{display:none}
+ #rows tr[data-id]>td.m-act>button:not(.m-main){min-width:40px!important;font-size:16px!important}
+ #rows tr[data-id]>td.m-pay small{display:none}
+ #rows tr[data-id]>td.m-pay.paid::after{content:'✓'}}
 </style>
 <script id="v31js">
 (function(){
@@ -94,6 +99,9 @@ ADD = r"""<style id="v31css">
   const due=(p.base||0)-(p.discount||0);pay.classList.add('m-pay');
   pay.classList.toggle('unpaid',due>0&&!p.paid&&!p.refunded&&p.status!=='ملغي');pay.classList.toggle('paid',!!p.paid&&!p.refunded&&due>0);
   tr.classList.toggle('m-booked',!!(p.wa&&!p.arrivedAt&&p.status==='مؤجل'));
+  // icons are enough on the phone: keep the leading icon, hide the words (title keeps the meaning)
+  const icon=e=>{if(!e||e.querySelector('.m-word'))return;const t=e.textContent.trim(),i=t.indexOf(' ');if(i<1)return;if(!e.title)e.title=t;e.replaceChildren(document.createTextNode(t.slice(0,i)),el('span',' '+t.slice(i+1),'m-word'))};
+  act.querySelectorAll(':scope>button:not(.m-main):not(.wa-link-btn)').forEach(icon);name.querySelectorAll('.wa-tag').forEach(icon);
   const wl=act.querySelector('.wa-link-btn');if(wl&&!wl.querySelector('.m-long')){const sent=wl.classList.contains('sent');wl.replaceChildren(document.createTextNode(sent?'✓':'🟢'),el('span',sent?' الرابط':' رابط','m-word'),el('span',sent?'':' الحجز','m-long'))}
   const ok=!!waNum(p.phone);let c=act.querySelector('.call-act');
   if(ok&&!c){c=callMenu(p);const more=act.querySelector('.more-act:not(.call-act)');more?act.insertBefore(c,more):act.append(c)}else if(!ok&&c)c.remove()})}
