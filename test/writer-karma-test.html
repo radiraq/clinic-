@@ -215,7 +215,7 @@ setInterval(()=>{try{if(list().some(p=>p.status===OUT))scheduleRender()}catch{}}
 
 async function copyText(t){try{await navigator.clipboard.writeText(t);return true}catch{const ta=el('textarea');ta.value=t;ta.setAttribute('readonly','');ta.style.position='fixed';ta.style.opacity='0';document.body.append(ta);ta.select();let ok=false;try{ok=document.execCommand('copy')}catch{}ta.remove();return ok}}
 function cpBtn(label,value,cls,p){const b=el('button',undefined,'cp'+(cls?' '+cls:''));b.type='button';b.append(el('span',label),el('small','⧉'));b.title='اضغط للنسخ';b.onclick=async e=>{e.stopPropagation();if(await copyText(value)){try{window.onCopied&&window.onCopied(p)}catch(e){}b.classList.add('ok');b.lastChild.textContent='✓';toast('تم النسخ: '+value);setTimeout(()=>{b.classList.remove('ok');b.lastChild.textContent='⧉'},1500)}else toast('تعذر النسخ؛ حدّد النص وانسخه يدويًا')};return b}
-var BUILD='20261124142356';
+var BUILD='20261125161500';
 
 // ===== Cloud version 0.3 (Firebase) — identical in both screens =====
 var CLINIC_ID='karma',DOCTOR_EMAIL='doctor@fallujah.clinic',EMAIL_DOMAIN='fallujah.clinic';
@@ -1169,7 +1169,7 @@ body:not(.dark) #patientForm .f-ok{background:#eefaf3!important;border-color:#b9
 </script>
 <style id="v30css">
 #rows .wa-link-btn{background:#1f9d55;color:#fff;border-color:#1f9d55;font-weight:700}
-#rows .wa-link-btn.sent{background:transparent;color:#1f9d55;border-color:#1f9d55}
+#rows .wa-link-btn.sent{background:transparent;color:#94a3b8;border-color:#94a3b866;font-weight:600}
 </style>
 <script id="v30js">
 (function(){
@@ -1180,7 +1180,7 @@ body:not(.dark) #patientForm .f-ok{background:#eefaf3!important;border-color:#b9
  function sentToday(p){const n=normPhone(p.phone||'');return S.patients.some(x=>x.waLinkAt&&x.clinic===p.clinic&&normPhone(x.phone||'')===n)}
  function openWa(url){if(window.AndroidBell){location.href=url}else{const w=window.open(url,'_blank');if(!w)location.href=url}}
  function send(id){refreshSharedState();const p=list().find(x=>x.id===id);if(!p)return;const num=waNum(p.phone);if(!num)return toast('رقم الهاتف غير صحيح');openWa('https://wa.me/'+num+'?text='+encodeURIComponent(MSG));if(!p.waLinkAt){p.waLinkAt=stamp();p.waLinkBy=roleName();audit('إرسال رابط الحجز بالواتساب — '+p.name)}render()}
- function add(){document.querySelectorAll('#rows tr[data-id]').forEach(tr=>{const p=S.patients.find(x=>x.id===tr.dataset.id);if(!p||!waNum(p.phone)||p.status==='ملغي')return;const td=tr.querySelector('td:last-child');if(!td||td.querySelector('.wa-link-btn'))return;const done=sentToday(p),b=el('button',done?'✓ الرابط':'🟢 رابط الحجز','wa-link-btn'+(done?' sent':''));b.type='button';b.title=done?'انرسل رابط الحجز — اضغطي إذا تريدين ترسلينه مرة ثانية':'إرسال رابط الحجز للمريض بالواتساب';b.onclick=ev=>{ev.stopPropagation();send(p.id)};td.prepend(b)})}
+ function add(){document.querySelectorAll('#rows tr[data-id]').forEach(tr=>{const p=S.patients.find(x=>x.id===tr.dataset.id);if(!p||!waNum(p.phone)||p.status==='ملغي')return;const td=tr.querySelector('td:last-child');if(!td||td.querySelector('.wa-link-btn'))return;const done=sentToday(p),b=el('button',done?'✓ تم الإرسال':'📤 أرسل رابط الحجز','wa-link-btn'+(done?' sent':''));b.type='button';b.title=done?'تم إرسال رابط الحجز لهذا المريض — اضغطي إذا تريدين ترسلينه مرة ثانية':'إرسال رابط الحجز للمريض بالواتساب';b.onclick=ev=>{ev.stopPropagation();send(p.id)};td.prepend(b)})}
  const _r=render;render=function(){const r=_r.apply(this,arguments);try{add()}catch(e){console.error(e)}return r};
  try{add()}catch(e){}
 })();
