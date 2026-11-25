@@ -226,7 +226,7 @@ setInterval(()=>{try{if(list().some(p=>p.status===OUT))scheduleRender()}catch{}}
 
 async function copyText(t){try{await navigator.clipboard.writeText(t);return true}catch{const ta=el('textarea');ta.value=t;ta.setAttribute('readonly','');ta.style.position='fixed';ta.style.opacity='0';document.body.append(ta);ta.select();let ok=false;try{ok=document.execCommand('copy')}catch{}ta.remove();return ok}}
 function cpBtn(label,value,cls,p){const b=el('button',undefined,'cp'+(cls?' '+cls:''));b.type='button';b.append(el('span',label),el('small','⧉'));b.title='اضغط للنسخ';b.onclick=async e=>{e.stopPropagation();if(await copyText(value)){try{window.onCopied&&window.onCopied(p)}catch(e){}b.classList.add('ok');b.lastChild.textContent='✓';toast('تم النسخ: '+value);setTimeout(()=>{b.classList.remove('ok');b.lastChild.textContent='⧉'},1500)}else toast('تعذر النسخ؛ حدّد النص وانسخه يدويًا')};return b}
-var BUILD='20261125172800';
+var BUILD='20261125174500';
 
 // ===== Cloud version 0.3 (Firebase) — identical in both screens =====
 var CLINIC_ID='karma',DOCTOR_EMAIL='doctor@fallujah.clinic',EMAIL_DOMAIN='fallujah.clinic';
@@ -1215,6 +1215,33 @@ body:not(.dark) #patientForm .f-ok{background:#eefaf3!important;border-color:#b9
   if(p.status!==DONE){if(has)has.remove();return}if(has)return;const b=el('button','↶ تراجع','b-undone');b.type='button';b.title='انتهى بالغلط؟ يرجع للانتظار بدوره';b.onclick=e=>{e.stopPropagation();undoDone(p.id)};td.prepend(b)})}
  const _r=render;render=function(){const r=_r.apply(this,arguments);try{add()}catch(e){console.error(e)}return r};
  try{add()}catch(e){}
+})();
+</script>
+<style id="v34css">
+body:not(.show-booked):not(.force-booked) #rows tr.booked-row{display:none!important}
+#rows tr.booked-head{display:table-row;background:transparent!important}
+#rows tr.booked-head>td{padding:10px 0 6px!important;border:0}
+#rows .booked-toggle{width:100%;padding:12px;font-size:15px;font-weight:800;color:#60a5fa;background:#3b82f61a;border:1px dashed #3b82f688;border-radius:12px}
+@media(max-width:760px){#rows tr.booked-head{display:block;contain:inline-size;margin:6px 0}#rows tr.booked-head>td{display:block;padding:0!important}}
+@media(min-width:761px){#rows td.m-name>small{white-space:normal}}
+</style>
+<script id="v34js">
+(function(){
+ // Bookings that haven't arrived yet sit in their own folding box at the end of today's list (same order).
+ // Pressing «✓ وصل» moves the patient into the waiting list as before.
+ function isBooked(p){return !!p&&!!p.wa&&!p.arrivedAt&&p.status==='مؤجل'}
+ function group(){const tb=document.getElementById('rows');if(!tb)return;tb.querySelectorAll('tr.booked-head').forEach(x=>x.remove());
+  const rows=[...tb.querySelectorAll('tr[data-id]')].filter(tr=>isBooked(list().find(x=>x.id===tr.dataset.id)));
+  tb.querySelectorAll('tr.booked-row').forEach(tr=>{if(!rows.includes(tr))tr.classList.remove('booked-row')});
+  if(!rows.length)return;
+  const open=document.body.classList.contains('show-booked');
+  const f=document.getElementById('filter');const forced=!!f&&f.value==='مؤجل';document.body.classList.toggle('force-booked',forced);
+  const h=document.createElement('tr');h.className='booked-head';const td=document.createElement('td');const first=tb.querySelector('tr[data-id]');td.colSpan=first?first.children.length:5;
+  const b=document.createElement('button');b.type='button';b.className='booked-toggle';b.textContent=(open||forced?'▴':'▾')+' 📞 حجوزات ما وصلت بعد ('+rows.length+')';
+  b.onclick=e=>{e.stopPropagation();document.body.classList.toggle('show-booked');group()};td.append(b);h.append(td);tb.append(h);
+  rows.forEach(tr=>{tr.classList.add('booked-row');tb.append(tr)})}
+ const _r=render;render=function(){const r=_r.apply(this,arguments);try{group()}catch(e){console.error(e)}return r};
+ try{group()}catch(e){}
 })();
 </script>
 </body></html>
