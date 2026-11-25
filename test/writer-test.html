@@ -226,7 +226,7 @@ setInterval(()=>{try{if(list().some(p=>p.status===OUT))scheduleRender()}catch{}}
 
 async function copyText(t){try{await navigator.clipboard.writeText(t);return true}catch{const ta=el('textarea');ta.value=t;ta.setAttribute('readonly','');ta.style.position='fixed';ta.style.opacity='0';document.body.append(ta);ta.select();let ok=false;try{ok=document.execCommand('copy')}catch{}ta.remove();return ok}}
 function cpBtn(label,value,cls,p){const b=el('button',undefined,'cp'+(cls?' '+cls:''));b.type='button';b.append(el('span',label),el('small','⧉'));b.title='اضغط للنسخ';b.onclick=async e=>{e.stopPropagation();if(await copyText(value)){try{window.onCopied&&window.onCopied(p)}catch(e){}b.classList.add('ok');b.lastChild.textContent='✓';toast('تم النسخ: '+value);setTimeout(()=>{b.classList.remove('ok');b.lastChild.textContent='⧉'},1500)}else toast('تعذر النسخ؛ حدّد النص وانسخه يدويًا')};return b}
-var BUILD='20261125170500';
+var BUILD='20261125173500';
 
 // ===== Cloud version 0.3 (Firebase) — identical in both screens =====
 var CLINIC_ID='fallujah',DOCTOR_EMAIL='doctor@fallujah.clinic',EMAIL_DOMAIN='fallujah.clinic';
@@ -1192,6 +1192,28 @@ body:not(.dark) #patientForm .f-ok{background:#eefaf3!important;border-color:#b9
  function openWa(url){if(window.AndroidBell){location.href=url}else{const w=window.open(url,'_blank');if(!w)location.href=url}}
  function send(id){refreshSharedState();const p=list().find(x=>x.id===id);if(!p)return;const num=waNum(p.phone);if(!num)return toast('رقم الهاتف غير صحيح');openWa('https://wa.me/'+num+'?text='+encodeURIComponent(MSG));if(!p.waLinkAt){p.waLinkAt=stamp();p.waLinkBy=roleName();audit('إرسال رابط الحجز بالواتساب — '+p.name)}render()}
  function add(){document.querySelectorAll('#rows tr[data-id]').forEach(tr=>{const p=S.patients.find(x=>x.id===tr.dataset.id);if(!p||!waNum(p.phone)||p.status==='ملغي')return;const td=tr.querySelector('td:last-child');if(!td||td.querySelector('.wa-link-btn'))return;const done=sentToday(p),b=el('button',done?'✓ تم الإرسال':'📤 أرسل رابط الحجز','wa-link-btn'+(done?' sent':''));b.type='button';b.title=done?'تم إرسال رابط الحجز لهذا المريض — اضغطي إذا تريدين ترسلينه مرة ثانية':'إرسال رابط الحجز للمريض بالواتساب';b.onclick=ev=>{ev.stopPropagation();send(p.id)};td.prepend(b)})}
+ const _r=render;render=function(){const r=_r.apply(this,arguments);try{add()}catch(e){console.error(e)}return r};
+ try{add()}catch(e){}
+})();
+</script>
+<style id="v33css">
+#rows .b-undone{background:transparent;color:#f5c26b;border:1px solid #f5c26b88;font-weight:700}
+</style>
+<script id="v33js">
+(function(){
+ // «↶ تراجع»: a patient marked finished by mistake goes back to how they were (inside the exam);
+ // if another patient is inside now, back to waiting at their own turn.
+ const DONE='مكتمل',IN='داخل الفحص',WAIT='بانتظار الدخول';
+ window.undoDone=function(id){refreshSharedState();const p=list().find(x=>x.id===id);if(!p||p.status!==DONE)return toast('المريض مو مكتمل');
+  const busy=list().some(x=>x.id!==id&&(x.status===IN||x.status===OUT));
+  if(!confirm(busy?'ترجيع '+p.name+' للانتظار بدوره؟\n(اكو مريض هسه داخل الفحص)':'ترجيع '+p.name+' لداخل الفحص مثل ما چان؟'))return;
+  refreshSharedState();const q=list().find(x=>x.id===id);if(!q||q.status!==DONE)return;
+  q.statusBy=roleName();q.statusAt=stamp();
+  if(!busy){q.status=IN;audit('تراجع عن إنهاء '+q.name+' — رجع داخل الفحص')}
+  else{q.status=WAIT;q.enteredAt=null;q.enteredBy=null;S.waitingOrder??={};const w=waitingQueue().map(x=>x.id).filter(x=>x!==q.id);const i=w.findIndex(x=>{const o=list().find(y=>y.id===x);return o&&o.no>q.no});w.splice(i<0?w.length:i,0,q.id);S.waitingOrder[clinic()]=w;audit('تراجع عن إنهاء '+q.name+' — رجع للانتظار بدوره')}
+  render();toast('↶ رجع '+q.name+(busy?' للانتظار بدوره':' داخل الفحص'))};
+ function add(){document.querySelectorAll('#rows tr[data-id]').forEach(tr=>{const p=list().find(x=>x.id===tr.dataset.id);const td=tr.querySelector('td:last-child');if(!p||!td)return;const has=td.querySelector('.b-undone');
+  if(p.status!==DONE){if(has)has.remove();return}if(has)return;const b=el('button','↶ تراجع','b-undone');b.type='button';b.title='انتهى بالغلط؟ يرجع مثل ما چان';b.onclick=e=>{e.stopPropagation();undoDone(p.id)};td.prepend(b)})}
  const _r=render;render=function(){const r=_r.apply(this,arguments);try{add()}catch(e){console.error(e)}return r};
  try{add()}catch(e){}
 })();
