@@ -33,6 +33,10 @@ public class MainActivity extends Activity {
         getWindow().setStatusBarColor(Color.parseColor("#101a28"));
         web = new WebView(this);
         web.setBackgroundColor(Color.parseColor("#101a28"));
+        // Keep the page's renderer process important while the screen is off.
+        // Otherwise Android lowers it when the WebView is hidden and freezes it,
+        // so doctor alerts stop arriving until the phone is unlocked.
+        if (Build.VERSION.SDK_INT >= 26) web.setRendererPriorityPolicy(WebView.RENDERER_PRIORITY_IMPORTANT, false);
         WebSettings s = web.getSettings();
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
@@ -86,6 +90,8 @@ public class MainActivity extends Activity {
 
     // Keep the page running in the background: never pause the WebView here.
     @Override protected void onPause() { super.onPause(); }
+    @Override protected void onStop() { super.onStop(); if (web != null) { web.resumeTimers(); web.onResume(); } }
+    @Override protected void onResume() { super.onResume(); if (web != null) { web.resumeTimers(); web.onResume(); } }
 
     @SuppressWarnings("deprecation")
     @Override public void onBackPressed() {
