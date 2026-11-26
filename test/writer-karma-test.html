@@ -226,7 +226,7 @@ setInterval(()=>{try{if(list().some(p=>p.status===OUT))scheduleRender()}catch{}}
 
 async function copyText(t){try{await navigator.clipboard.writeText(t);return true}catch{const ta=el('textarea');ta.value=t;ta.setAttribute('readonly','');ta.style.position='fixed';ta.style.opacity='0';document.body.append(ta);ta.select();let ok=false;try{ok=document.execCommand('copy')}catch{}ta.remove();return ok}}
 function cpBtn(label,value,cls,p){const b=el('button',undefined,'cp'+(cls?' '+cls:''));b.type='button';b.append(el('span',label),el('small','⧉'));b.title='اضغط للنسخ';b.onclick=async e=>{e.stopPropagation();if(await copyText(value)){try{window.onCopied&&window.onCopied(p)}catch(e){}b.classList.add('ok');b.lastChild.textContent='✓';toast('تم النسخ: '+value);setTimeout(()=>{b.classList.remove('ok');b.lastChild.textContent='⧉'},1500)}else toast('تعذر النسخ؛ حدّد النص وانسخه يدويًا')};return b}
-var BUILD='20261125200500';
+var BUILD='20261126091500';
 
 // ===== Cloud version 0.3 (Firebase) — identical in both screens =====
 var CLINIC_ID='karma',DOCTOR_EMAIL='doctor@fallujah.clinic',EMAIL_DOMAIN='fallujah.clinic';
@@ -1277,6 +1277,34 @@ body:not(.show-booked):not(.force-booked) #rows tr.booked-row{display:none!impor
  const _r=render;render=function(){const r=_r.apply(this,arguments);try{sync()}catch(e){console.error(e)}return r};
  try{sync()}catch(e){}
  setInterval(()=>{try{sync()}catch(e){}},60000);
+})();
+</script>
+<style id="v37css">
+/* v0.37 — designer pass: calmer buttons, one main action per row, clearer disabled state */
+.banner>span:nth-child(2){display:none!important}
+#rows td:last-child button.b-defer,#rows td:last-child button.b-cancel,#rows td:last-child button.b-edit,#rows td:last-child button.b-undo,
+#rows td:last-child button.b-back:not(.b-arrive),#rows td:last-child button.b-refund,#rows td:last-child button.b-pv,#rows td:last-child>button.cp,
+#rows td:last-child button.b-undone{background:transparent!important;color:#c3cfdf!important;border:1px solid #ffffff2e!important;box-shadow:none!important}
+#rows td:last-child button.b-cancel{color:#f0a0a0!important}
+#rows td:last-child button.b-undone{color:#f5c26b!important}
+#rows td:last-child button.wa-link-btn:not(.sent){background:transparent!important;color:#3ccf7d!important;border:1px solid #1f9d55!important}
+#rows button:disabled,#rows button[disabled]{opacity:.32!important;filter:grayscale(1)!important;cursor:not-allowed}
+#rows td small,#rows td .muted{color:#b4c2d4}
+@media(min-width:761px){#rows td:last-child>*{vertical-align:middle;margin:3px 2px}}
+@media(max-width:760px){body:not([data-page]) main{position:relative}body:not([data-page]) header .tools>#refreshBtn{position:absolute;top:4px;left:10px;width:40px!important;height:30px!important;min-height:0!important;padding:0!important;z-index:5}}
+</style>
+<script id="v37js">
+(function(){
+ // Same order in every row: main action → reminder/link → back/defer/cancel → small tools → menus.
+ const RANK=[['.b-in,.b-done,.b-arrive',0],['.wa-pay,.b-pay',1],['.remind-btn',2],['.wa-link-btn',3],['.b-undone',4],['.b-undo,.b-back',5],['.b-defer',6],['.b-cancel',7],['.b-refund',8],['.b-pv',9],['.b-edit',10],['.cp',11],['details',12]];
+ function rank(e){for(const[s,r]of RANK)if(e.matches(s))return r;return 9.5}
+ function order(){document.querySelectorAll('#rows tr[data-id]>td:last-child').forEach(td=>{const kids=[...td.children];const sorted=kids.slice().sort((a,b)=>rank(a)-rank(b));if(sorted.some((k,i)=>k!==kids[i]))sorted.forEach(k=>td.append(k))});
+  document.querySelectorAll('#rows button').forEach(b=>{if(/Post void/.test(b.textContent))b.classList.add('b-pv')})}
+ function words(){const n=document.getElementById('name');if(n){if(/تجريبي/.test(n.placeholder))n.placeholder='الاسم الثلاثي';const l=n.closest('label');if(l&&l.firstChild&&l.firstChild.nodeType===3&&/التجريبي/.test(l.firstChild.textContent))l.firstChild.textContent='اسم المريض'}
+  document.querySelectorAll('#patientForm p.muted').forEach(p=>{if(/وهمي/.test(p.textContent))p.remove()});
+  const f=document.querySelector('.aside-foot');if(f&&/وهمية|تجريبية/.test(f.textContent)){const first=(f.innerHTML.split(/<br\s*\/?>/i)[0]||'').trim();f.innerHTML=first}}
+ const _r=render;render=function(){const r=_r.apply(this,arguments);try{order()}catch(e){console.error(e)}return r};
+ try{words();order()}catch(e){console.error(e)}
 })();
 </script>
 </body></html>
