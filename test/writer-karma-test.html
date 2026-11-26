@@ -226,7 +226,7 @@ setInterval(()=>{try{if(list().some(p=>p.status===OUT))scheduleRender()}catch{}}
 
 async function copyText(t){try{await navigator.clipboard.writeText(t);return true}catch{const ta=el('textarea');ta.value=t;ta.setAttribute('readonly','');ta.style.position='fixed';ta.style.opacity='0';document.body.append(ta);ta.select();let ok=false;try{ok=document.execCommand('copy')}catch{}ta.remove();return ok}}
 function cpBtn(label,value,cls,p){const b=el('button',undefined,'cp'+(cls?' '+cls:''));b.type='button';b.append(el('span',label),el('small','⧉'));b.title='اضغط للنسخ';b.onclick=async e=>{e.stopPropagation();if(await copyText(value)){try{window.onCopied&&window.onCopied(p)}catch(e){}b.classList.add('ok');b.lastChild.textContent='✓';toast('تم النسخ: '+value);setTimeout(()=>{b.classList.remove('ok');b.lastChild.textContent='⧉'},1500)}else toast('تعذر النسخ؛ حدّد النص وانسخه يدويًا')};return b}
-var BUILD='20261126093500';
+var BUILD='20261126101500';
 
 // ===== Cloud version 0.3 (Firebase) — identical in both screens =====
 var CLINIC_ID='karma',DOCTOR_EMAIL='doctor@fallujah.clinic',EMAIL_DOMAIN='fallujah.clinic';
@@ -1339,6 +1339,25 @@ body.v38-now .compact-next{flex:0 0 auto!important;width:auto!important}
   document.body.classList.toggle('v38-now',!!document.getElementById('nowCard'))}
  const _r=render;render=function(){const r=_r.apply(this,arguments);try{place()}catch(e){console.error(e)}return r};
  try{place()}catch(e){console.error(e)}
+})();
+</script>
+<style id="v39css">
+/* v0.39 — designer pass 3 */
+/* doctor & writer: the waiting-list tools (quick messages, turn arrows) only on the patients page */
+body[data-page]:not([data-page=queue]) .overview-bar>.doctor-quick,
+body[data-page]:not([data-page=queue]) .overview-bar>.queue-inline{display:none!important}
+/* turn arrows only when two or more are waiting */
+body[data-page].v39-few .overview-bar>.queue-inline{display:none!important}
+/* secretary: next-patient row only on the waiting list */
+body:not([data-page]) main:has(#queue.hidden) header .compact-next{display:none!important}
+/* phone: quick message buttons five to a row */
+@media(max-width:760px){body[data-page] #quick{grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:5px!important}
+ body[data-page] #quick>button{min-height:32px!important;padding:5px 2px!important;font-size:12.5px!important;line-height:1.25}}
+</style>
+<script id="v39js">
+(function(){
+ function few(){try{document.body.classList.toggle('v39-few',waitingQueue().length<2)}catch(e){}}
+ const _r=render;render=function(){const r=_r.apply(this,arguments);few();return r};few();
 })();
 </script>
 </body></html>
