@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""v0.40 (doctor screens only) — «📅 حجوزات الأسبوع» button.
+"""v0.40 (preview: doctor screens; live: all six screens) — «📅 حجوزات الأسبوع» button.
 A header button on the doctor screen opens a window listing this clinic's bookings
 (WhatsApp, online link and phone bookings: wa:true) for today and the next 6 days,
 day by day with the count beside each day. Read-only: it changes no patient data.
@@ -7,12 +7,14 @@ day by day with the count beside each day. Read-only: it changes no patient data
 Usage:
   python3 tools/patch-v40.py preview   -> writes test/doctor-week-preview.html and
                                           test/doctor-karma-week-preview.html (live screens untouched)
-  python3 tools/patch-v40.py live      -> patches doctor-test.html and doctor-karma-test.html
+  python3 tools/patch-v40.py live      -> patches all six screens (doctor, secretary, writer x Fallujah, Al-Karma)
 """
 import pathlib, sys, time
 T = pathlib.Path(__file__).resolve().parent.parent / 'test'
 PAIRS = [('doctor-test.html', 'doctor-week-preview.html'),
          ('doctor-karma-test.html', 'doctor-karma-week-preview.html')]
+ALL = ['doctor-test.html', 'doctor-karma-test.html', 'secretary-test.html',
+       'secretary-karma-test.html', 'writer-test.html', 'writer-karma-test.html']
 MODE = sys.argv[1] if len(sys.argv) > 1 else 'preview'
 BUILD = time.strftime('%Y%m%d%H%M%S')
 
@@ -84,7 +86,7 @@ ADD = r"""<style id="v40css">
 </script>
 """
 
-for src, prev in PAIRS:
+for src, prev in (PAIRS if MODE != 'live' else [(f, f) for f in ALL]):
     s = (T / src).read_text(encoding='utf-8')
     if 'id="v40js"' in s: print('already', src); continue
     assert s.count(BTN_ANCHOR) == 1, src
