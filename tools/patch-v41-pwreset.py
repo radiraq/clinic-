@@ -34,7 +34,7 @@ def patch(path, migrate):
     assert OLD_DEF in s, path
     s = s.replace(OLD_DEF, OLD_DEF + HELPERS % {'uid': DOCTOR_UID, 'migrate': 'true' if migrate else 'false'}, 1)
     s = s.replace('cloud.user.email===DOCTOR_EMAIL', 'isDoc(cloud.user)')
-    s = s.replace('user.email===DOCTOR_EMAIL', 'isDoc(user)')
+    s = s.replace('(user.email===DOCTOR_EMAIL)', '(isDoc(user))').replace('{if(user.email===DOCTOR_EMAIL)', '{if(isDoc(user))').replace('{return user.email===DOCTOR_EMAIL}', '{return isDoc(user)}')
     s = s.replace('FB.signInWithEmailAndPassword(', 'signInAny(')
     # the helper itself must keep calling Firebase directly
     s = s.replace('return signInAny(auth,email,pw)', 'return FB.signInWithEmailAndPassword(auth,email,pw)')
